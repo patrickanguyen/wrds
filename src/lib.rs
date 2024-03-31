@@ -1,28 +1,19 @@
 #![cfg_attr(not(test), no_std)]
 
-pub mod parser;
-
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub mod decode;
 
 #[cfg(test)]
 mod tests {
-    // use crate::parser::Error;
-
-    use super::*;
+    use crate::decode::{from_blocks, Block1, Block2, Block3, Block4};
 
     #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    fn test_gt0() {
+        let block1 = Block1(5);
+        let block2 = Block2(25);
+        let block3 = Block3(55);
+        let block4 = Block4(44);
 
-    #[test]
-    fn basic() {
-        let (block1, block2, block3, block4) = (12312, 22, 11, 0xBFFF);
-
-        let parser = parser::Parser::new(parser::RdsStandard::Rds);
-        assert!(parser.parse(&block1, &block2, &block3, &block4).is_ok());
+        let message = from_blocks(&block1, &block2, &block3, &block4);
+        assert!(message.is_ok());
     }
 }
