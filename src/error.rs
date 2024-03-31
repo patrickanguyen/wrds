@@ -1,3 +1,5 @@
+//! Contains error types.
+
 use core::fmt;
 use crate::types::GroupType;
 

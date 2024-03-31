@@ -1,4 +1,4 @@
-//! Decoder for RDS/RBDS shared structure.
+//! Decoder for RDS shared structure.
 
 use crate::types::{Block1, Block2, GroupType, ProgramIdentifier, ProgramType, TrafficProgramCode};
 

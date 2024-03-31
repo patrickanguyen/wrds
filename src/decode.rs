@@ -1,3 +1,5 @@
+//! Decoder for RDS Messages.
+
 use self::{psaf::{decode_0a, decode_0b}, rt::{decode_2a, decode_2b}, shared::Shared};
 use crate::{error::Error, types::{Block1, Block2, Block3, Block4, GroupType, Message, Payload}};
 

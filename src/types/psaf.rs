@@ -1,8 +1,14 @@
+//! Types relating to Type 0 Group: Basic tuning and switching information.
+
 use bitflags::bitflags;
 
+/// Indication of whether music or speech is being broadcasted.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum MusicSpeechCode {
+    /// Speech, at present, is being broadcasted.
     Speech,
+    /// Music, at present, is being broadcasted.
+    /// This could also indicate that the broadcaster is not using this field.
     MusicOrUnused,
 }
 
@@ -15,27 +21,43 @@ impl From<bool> for MusicSpeechCode {
     }
 }
 
+/// Used in conduction with TrafficProgramCode to indicate whether a traffic announcement is
+/// currently being broadcasted.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TrafficAnnouncementCode(pub bool);
 
 bitflags! {
+    /// Used to indicate different operating modes.
     #[derive(Clone, Debug, PartialEq, Eq)]
     pub struct DecoderIdentifier: u8 {
+        /// Is stereo or mono?
         const IS_STEREO = 0b0001;
+        /// Is Artificial Head or not?
         const IS_ARTIFICIAL_HEAD = 0b0010;
+        /// Is compressed or not?
         const IS_COMPRESSED = 0b0100;
+        /// Is PTY dynamically switched or static PTY?
+        ///
         const IS_DYNAMIC_PTY = 0b1000;
     }
 }
 
+/// Alternative Frequency Table Code.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum AlternativeFreqCode {
+    /// Not to be used.
     NotToBeUsed,
+    /// Frequency.
     Frequency(u32),
+    /// Filler code.
     FillerCode,
+    /// Not assigned.
     NotAssigned,
+    /// No AF exists.
     NoAfExists,
+    /// N AF Follows.
     AfFollows(usize),
+    /// An LF/MF Frequency follows.
     LfMfFrequencyFollows,
 }
 
@@ -75,7 +97,6 @@ impl From<u8> for AlternativeFreqCode {
     }
 }
 
+/// Segment of Programme Service name.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PsSegment(pub [char; 2]);
-
-

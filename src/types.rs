@@ -1,3 +1,5 @@
+//! Contains types for RDS Decoder.
+
 pub mod psaf;
 pub mod rt;
 
