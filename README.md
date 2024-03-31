@@ -1,4 +1,4 @@
-# wrds
+# WRDS
 
 A Radio Data System (RDS) decoder library written in Rust.
 
@@ -6,4 +6,3 @@ A Radio Data System (RDS) decoder library written in Rust.
 - [X] Type 0 Group: Basic Tuning and Switching Information
 - [X] Type 2 Group: RadioText
 - [ ] Everything Else
-
