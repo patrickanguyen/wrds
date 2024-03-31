@@ -38,7 +38,6 @@ pub struct ProgramIdentifier(pub u16);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TrafficProgramCode(pub bool);
 
-
 /// RDS Message Group Type
 /// The B0 bit-field is added as the LSB.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, enumn::N)]
@@ -75,7 +74,7 @@ pub enum GroupType {
     FourteenA,
     FourteenB,
     FifteenA,
-    FifteenB
+    FifteenB,
 }
 
 /// Payload of Radio Data System Message.
@@ -113,7 +112,7 @@ pub enum Payload {
     FourteenA,
     FourteenB,
     FifteenA,
-    FifteenB
+    FifteenB,
 }
 
 /// Decoded Radio Data System Message.

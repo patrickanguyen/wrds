@@ -1,7 +1,7 @@
 //! Contains error types.
 
-use core::fmt;
 use crate::types::GroupType;
+use core::fmt;
 
 /// Radio Data System Decoding Error
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
