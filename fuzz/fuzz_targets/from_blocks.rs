@@ -2,7 +2,7 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use wrds::decode::{from_blocks, Block1, Block2, Block3, Block4};
+use wrds::{from_blocks, Block1, Block2, Block3, Block4};
 
 #[derive(Clone, Debug, Arbitrary)]
 pub struct Blocks {
