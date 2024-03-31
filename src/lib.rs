@@ -1,10 +1,15 @@
 #![cfg_attr(not(test), no_std)]
 
 pub mod decode;
+pub mod error;
+pub mod types;
 
 #[cfg(test)]
 mod tests {
-    use crate::decode::{from_blocks, Block1, Block2, Block3, Block4};
+    use super::{
+        decode::from_blocks,
+        types::{Block1, Block2, Block3, Block4},
+    };
 
     #[test]
     fn test_gt0() {
