@@ -28,7 +28,6 @@ pub struct Block3(pub u16);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Block4(pub u16);
 
-
 /// Radio Data System Decoding Error
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Error {

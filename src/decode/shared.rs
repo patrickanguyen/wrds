@@ -1,7 +1,6 @@
-use super::{
-    Block1, Block2, GroupType, ProgramIdentifier, ProgramType,TrafficProgramCode,
-};
+use super::{Block1, Block2, GroupType, ProgramIdentifier, ProgramType, TrafficProgramCode};
 
+/// Information that will always be represent in every RDS/RBDS message.
 pub struct Shared {
     pub pi: ProgramIdentifier,
     pub group_type: GroupType,
@@ -10,6 +9,7 @@ pub struct Shared {
 }
 
 impl Shared {
+    /// Decode Block1 and Block2 for shared information.
     pub fn new(block1: &Block1, block2: &Block2) -> Self {
         let shared = block2.0 >> 4;
         let pty_value = shared & 0x1F;
