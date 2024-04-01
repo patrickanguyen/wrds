@@ -26,6 +26,18 @@ impl From<bool> for MusicSpeechCode {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TrafficAnnouncementCode(pub bool);
 
+/// Individual bit of the Decoder Identifier.
+///
+/// DecoderIdentifierCode is sent progressively over 4 messages with CharacterSegment to determine the location
+/// in the overall DecoderIdentifier.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DecoderIdentifierCode(pub bool);
+
+/// Determines the location of the DecoderIdentifierCode in the DecoderIdentifier codeword
+/// and the Programme Service name (PS) segment in the overall Programme Service name.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CharacterSegment(pub usize);
+
 bitflags! {
     /// Used to indicate different operating modes.
     #[derive(Clone, Debug, PartialEq, Eq)]

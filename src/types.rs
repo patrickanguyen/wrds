@@ -129,7 +129,8 @@ pub struct Message {
 pub struct ZeroAPayload {
     pub ta: psaf::TrafficAnnouncementCode,
     pub ms: psaf::MusicSpeechCode,
-    pub di: psaf::DecoderIdentifier,
+    pub di: psaf::DecoderIdentifierCode,
+    pub cs: psaf::CharacterSegment,
     pub af: (psaf::AlternativeFreqCode, psaf::AlternativeFreqCode),
     pub ps_segment: psaf::PsSegment,
 }
@@ -138,7 +139,8 @@ pub struct ZeroAPayload {
 pub struct ZeroBPayload {
     pub ta: psaf::TrafficAnnouncementCode,
     pub ms: psaf::MusicSpeechCode,
-    pub di: psaf::DecoderIdentifier,
+    pub di: psaf::DecoderIdentifierCode,
+    pub cs: psaf::CharacterSegment,
     pub pi: ProgramIdentifier,
     pub ps_segment: psaf::PsSegment,
 }
