@@ -10,7 +10,7 @@
 //! It is the responsibility of your application to keep track of state of the currently tuned program.
 //!
 //! ```
-//! use wrds::{from_blocks, Block1, Block2, Block3, Block4};
+//! use libwrds::{from_blocks, Block1, Block2, Block3, Block4};
 //!
 //! let message = from_blocks(&Block1(5), &Block2(25), &Block3(55), &Block4(44));
 //! assert!(message.is_ok());

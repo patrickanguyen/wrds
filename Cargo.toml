@@ -1,4 +1,4 @@
 [workspace]
-members = ["crates/libwrds", "crates/wrds"]
+members = ["crates/wrds"]
 exclude = ["fuzz"]
 resolver = "2"
