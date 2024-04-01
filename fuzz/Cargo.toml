@@ -11,8 +11,8 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
 
-[dependencies.wrds]
-path = ".."
+[dependencies.libwrds]
+path = "../crates/libwrds"
 
 [[bin]]
 name = "from_blocks"

@@ -76,6 +76,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "libwrds"
+version = "0.1.0"
+dependencies = [
+ "bitflags",
+ "enumn",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -117,18 +125,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
-name = "wrds"
-version = "0.1.0"
-dependencies = [
- "bitflags",
- "enumn",
-]
-
-[[package]]
 name = "wrds-fuzz"
 version = "0.0.0"
 dependencies = [
  "arbitrary",
  "libfuzzer-sys",
- "wrds",
+ "libwrds",
 ]
