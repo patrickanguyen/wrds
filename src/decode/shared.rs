@@ -17,7 +17,9 @@ impl Shared {
         let pty_tp_gt = block2.0 >> 5;
         let pty_value = pty_tp_gt & 0x1F;
         let tp_value = (pty_tp_gt >> 5) & 0x1;
-        let gt_value = ((pty_tp_gt >> 6) & 0x1F) as u8;
+        let gt_value = ((pty_tp_gt >> 6) & 0x1F)
+            .try_into()
+            .expect("Group type should fit within 8 bits");
 
         Self {
             pi: ProgramIdentifier(block1.0),
@@ -67,5 +69,22 @@ mod tests {
                 tp: TrafficProgramCode(false)
             }
         );
+    }
+
+    #[test]
+    fn dead_beef() {
+        let block1 = Block1(0xDEAD);
+        let block2 = Block2(0xBEEF);
+
+        let shared = Shared::new(&block1, &block2);
+        assert_eq!(
+            shared,
+            Shared {
+                pi: ProgramIdentifier(0xDEAD),
+                group_type: GroupType::n(0x17).unwrap(),
+                tp: TrafficProgramCode(true),
+                pty: ProgramType(0x17)
+            }
+        )
     }
 }
