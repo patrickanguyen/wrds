@@ -1,7 +1,5 @@
 use crate::error::Error;
 
-pub mod type0;
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Block1(pub u16);
 
@@ -112,5 +110,4 @@ pub struct Metadata {
     pub pi: Option<ProgrammeIdentifier>,
     pub pty: Option<ProgrammeType>,
     pub tp: Option<TrafficProgram>,
-    pub type0: Option<type0::Type0>,
 }

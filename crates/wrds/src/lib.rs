@@ -1,5 +1,11 @@
+#![deny(unsafe_code)]
 #![cfg_attr(not(test), no_std)]
 
-pub mod decoder;
-pub mod error;
-pub mod types;
+mod decoder;
+pub use decoder::Decoder;
+
+mod error;
+pub use error::Error;
+
+mod types;
+pub use types::{Message, Metadata, ProgrammeIdentifier, ProgrammeType, TrafficProgram};

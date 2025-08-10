@@ -1,5 +1,5 @@
 use crate::types::{
-    Block1, Block2, Block3, Block4, Message, GroupVariant, Metadata, ProgrammeIdentifier,
+    Block1, Block2, Block3, Block4, GroupVariant, Message, Metadata, ProgrammeIdentifier
 };
 
 use self::shared::Shared;
