@@ -1,5 +1,5 @@
 use crate::{
-    decoder::{mode_filter::ModeFilter},
+    decoder::mode_filter::ModeFilter,
     types::{Block1, Block2, Block3, Block4, GroupVariant, Message, Metadata, ProgrammeIdentifier},
     ProgrammeType, TrafficProgram,
 };
@@ -7,6 +7,7 @@ use crate::{
 use self::shared::Shared;
 
 mod mode_filter;
+mod ps_filter;
 mod shared;
 
 const PI_FILTER_COUNT: usize = 6;
