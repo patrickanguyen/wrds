@@ -1,51 +1,71 @@
-use crate::types::{
-    Block1, Block2, Block3, Block4, GroupVariant, Message, Metadata, ProgrammeIdentifier,
+use crate::{
+    decoder::{mode_filter::ModeFilter},
+    types::{Block1, Block2, Block3, Block4, GroupVariant, Message, Metadata, ProgrammeIdentifier},
+    ProgrammeType, TrafficProgram,
 };
 
 use self::shared::Shared;
 
+mod mode_filter;
 mod shared;
 
+const PI_FILTER_COUNT: usize = 6;
+const PI_FILTER_MIN: usize = 5;
+
+const PTY_FILTER_COUNT: usize = 6;
+const PTY_FILTER_MIN: usize = 5;
+
+const TP_FILTER_COUNT: usize = 6;
+const TP_FILTER_MIN: usize = 5;
+
+#[derive(Debug)]
 pub struct Decoder {
-    metadata: Metadata,
+    pi_filter: ModeFilter<ProgrammeIdentifier, PI_FILTER_COUNT>,
+    pty_filter: ModeFilter<ProgrammeType, PTY_FILTER_COUNT>,
+    tp_filter: ModeFilter<TrafficProgram, TP_FILTER_COUNT>,
 }
 
 impl Decoder {
     /// Create new RDS decoder.
     pub fn new() -> Self {
         Decoder {
-            metadata: Metadata::default(),
+            pi_filter: ModeFilter::new(PI_FILTER_MIN).unwrap(),
+            pty_filter: ModeFilter::new(PTY_FILTER_MIN).unwrap(),
+            tp_filter: ModeFilter::new(TP_FILTER_MIN).unwrap(),
         }
     }
 
     /// Decode the RDS message and return the current state of the RDS metadata.
-    pub fn decode(&mut self, blocks: &Message) -> &Metadata {
+    pub fn decode(&mut self, blocks: &Message) -> Metadata {
         self.decode_block1(&blocks.block1);
 
         // Return immediately if Block 2 is not provided because it determines
         // how to decode Block 3 and 4.
-        if blocks.block2.is_none() {
-            return &self.metadata;
+        if let Some(block2) = blocks.block2 {
+            self.decode_blocks234(
+                &block2,
+                &blocks.block3,
+                &blocks.block4,
+            );
         }
 
-        self.decode_blocks234(
-            &blocks.block2.expect("Block 2 should not be empty"),
-            &blocks.block3,
-            &blocks.block4,
-        );
-
-        &self.metadata
+        self.metadata()
     }
 
     /// Reset Decoder's state to default.
     /// This method should be called after tuning to a different station.
     pub fn reset(&mut self) {
-        self.metadata = Metadata::default();
+        self.pi_filter.reset();
+        self.pty_filter.reset();
+        self.tp_filter.reset();
     }
 
     /// Decode Block 1 as the Programme Identifier (PI) if provided.
     fn decode_block1(&mut self, block1: &Option<Block1>) {
-        self.metadata.pi = block1.map(|block| ProgrammeIdentifier(block.0));
+        let maybe_pi = block1.map(|block| ProgrammeIdentifier(block.0));
+        if let Some(pi) = maybe_pi {
+            self.pi_filter.push(pi);
+        }
     }
 
     /// Decode Blocks 2, 3, and 4.
@@ -57,14 +77,20 @@ impl Decoder {
         _block4: &Option<Block4>,
     ) {
         let shared = Shared::from(*block2);
-        // If PI cannot be retrieved from Block 1 and Group Variant is Type B, use PI from Block 3.
-        if self.metadata.pi.is_none() && (shared.gv == GroupVariant::B && block3.is_some()) {
-            self.metadata.pi = Some(ProgrammeIdentifier(
-                block3.expect("Block 3 should not be empty").0,
-            ));
+        if shared.gv == GroupVariant::B && block3.is_some() {
+            let pi = block3.map(|block| ProgrammeIdentifier(block.0));
+            self.pi_filter.push(pi.unwrap());
         }
-        self.metadata.pty = Some(shared.pty);
-        self.metadata.tp = Some(shared.tp);
+        self.pty_filter.push(shared.pty);
+        self.tp_filter.push(shared.tp);
+    }
+
+    fn metadata(&self) -> Metadata {
+        Metadata {
+            pi: self.pi_filter.mode(),
+            pty: self.pty_filter.mode(),
+            tp: self.tp_filter.mode(),
+        }
     }
 }
 
