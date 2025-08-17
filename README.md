@@ -2,7 +2,7 @@
 
 A Radio Data System (RDS) decoder library written in Rust.
 
-> ![WARNING]
+> [!WARNING]
 > This library is very experimental and should not be used for anything serious.
 
 ## Supported fields
