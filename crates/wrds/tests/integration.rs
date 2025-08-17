@@ -53,6 +53,7 @@ fn block3_pi() {
             pty: Some(ProgrammeType(0x17)),
             tp: Some(TrafficProgram(true)),
             pi: Some(ProgrammeIdentifier(EXPECTED_PI)),
+            ..Default::default()
         }
     )
 }

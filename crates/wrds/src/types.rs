@@ -110,4 +110,5 @@ pub struct Metadata {
     pub pi: Option<ProgrammeIdentifier>,
     pub pty: Option<ProgrammeType>,
     pub tp: Option<TrafficProgram>,
+    pub ps: Option<[u8; 8]>,
 }

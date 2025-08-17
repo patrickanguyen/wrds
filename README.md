@@ -9,6 +9,7 @@ A Radio Data System (RDS) decoder library written in Rust.
 - [X] Programme Identifier (PI)
 - [X] Programme Type (PTY)
 - [X] Traffic Program (TP)
+- [X] Programme Service Name (PS)
 - [ ] Radio Text (RT)
 - [ ] Radio Text Plus (RT+)
 - [ ] Everything else
