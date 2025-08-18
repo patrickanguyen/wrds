@@ -34,14 +34,15 @@ impl<const N: usize> Bitset<N> {
         Ok(())
     }
 
-    pub fn set(&mut self, value: u16) {
-        self.underlying = value;
-    }
-
     /// Returns true if all the bits are set
     pub fn all(&self) -> bool {
         let val: u32 = self.underlying.into();
         let all_set = (1 << N) - 1;
         all_set == val
+    }
+
+    /// Counts number of bits set
+    pub fn count(&self) -> usize {
+        self.underlying.count_ones() as usize
     }
 }

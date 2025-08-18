@@ -29,6 +29,7 @@ pub struct RtDecoder {
     current_group: Option<Group>,
     text_ab: Option<bool>,
     received_segments: Bitset<NUM_SEGMENTS_ADDRS>,
+    expected_segments: usize,
 }
 
 impl RtDecoder {
@@ -38,6 +39,7 @@ impl RtDecoder {
             current_group: None,
             text_ab: None,
             received_segments: Bitset::default(),
+            expected_segments: NUM_SEGMENTS_ADDRS,
         }
     }
 
@@ -50,10 +52,10 @@ impl RtDecoder {
     }
 
     pub fn confirmed(&self) -> Option<RadioText> {
-        if self.received_segments.all() {
+        if self.received_segments.count() >= self.expected_segments {
             return Some(RadioText(self.buffer));
         }
-        return None;
+        None
     }
 
     fn push_segment<const N: usize>(
@@ -71,27 +73,40 @@ impl RtDecoder {
     }
 
     fn write_chars_to_buffer<const N: usize>(&mut self, index: usize, chars: &[u8; N]) -> bool {
+        let mut maybe_early_idx = None;
         for (char_idx, letter) in chars.iter().enumerate() {
-            if *letter == EARLY_RETURN {
-                return true;
-            }
             let offset = N * index + char_idx;
-            if offset < self.buffer.len() {
-                self.buffer[offset] = *letter;
+            match letter {
+                &EARLY_RETURN => {
+                    self.expected_segments = index + 1;
+                    maybe_early_idx = Some(char_idx);
+                    break;
+                }
+                letter
+                    if letter.is_ascii_alphanumeric()
+                        || letter.is_ascii_punctuation()
+                        || letter == &b' ' =>
+                {
+                    self.buffer[offset] = *letter;
+                }
+                _ => {
+                    // Invalid character, replace with space
+                    self.buffer[offset] = b' ';
+                }
             }
         }
-        false
+        if let Some(early_idx) = maybe_early_idx {
+            let offset = N * index + early_idx;
+            self.buffer[offset..].fill(b' ');
+        }
+
+        maybe_early_idx.is_some()
     }
 
-    fn update_received_segments(&mut self, index: usize, has_early_return: bool) {
-        const ALL_SEGMENTS_SET: u16 = u16::MAX;
-        if has_early_return {
-            self.received_segments.set(ALL_SEGMENTS_SET);
-        } else {
-            self.received_segments
-                .set_bit(index)
-                .expect("Index should be always be less than 16");
-        }
+    fn update_received_segments(&mut self, index: usize, _has_early_return: bool) {
+        self.received_segments
+            .set_bit(index)
+            .expect("Index should be always be less than 16");
     }
 
     fn is_reset_needed(&self, group: Group, text_ab: bool) -> bool {
@@ -103,5 +118,6 @@ impl RtDecoder {
         self.current_group = Some(current_group);
         self.text_ab = Some(text_ab);
         self.received_segments.reset();
+        self.expected_segments = NUM_SEGMENTS_ADDRS;
     }
 }
