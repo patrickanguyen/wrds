@@ -142,14 +142,14 @@ impl Decoder {
             let chars3 = block3.0.to_be_bytes();
             let chars4 = block4.0.to_be_bytes();
             let chars = [chars3[0], chars3[1], chars4[0], chars4[1]];
-            self.rt_decoder.push_segment_a(index.into(), chars, text_ab);
+            self.rt_decoder.push_segment_a(index, chars, text_ab);
         }
     }
 
     fn handle_radio_text_b(&mut self, index: usize, text_ab: bool, block4: &Option<Block4>) {
         if let Some(block4) = block4 {
             let chars = block4.0.to_be_bytes();
-            self.rt_decoder.push_segment_b(index.into(), chars, text_ab);
+            self.rt_decoder.push_segment_b(index, chars, text_ab);
         }
     }
 
