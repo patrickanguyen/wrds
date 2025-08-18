@@ -82,11 +82,7 @@ impl RtDecoder {
                     maybe_early_idx = Some(char_idx);
                     break;
                 }
-                letter
-                    if letter.is_ascii_alphanumeric()
-                        || letter.is_ascii_punctuation()
-                        || letter == &b' ' =>
-                {
+                letter if Self::is_rt_character_valid(*letter) => {
                     self.buffer[offset] = *letter;
                 }
                 _ => {
@@ -119,5 +115,9 @@ impl RtDecoder {
         self.text_ab = Some(text_ab);
         self.received_segments.reset();
         self.expected_segments = NUM_SEGMENTS_ADDRS;
+    }
+
+    fn is_rt_character_valid(c: u8) -> bool {
+        c.is_ascii_alphanumeric() || c.is_ascii_punctuation() || c == b' '
     }
 }
