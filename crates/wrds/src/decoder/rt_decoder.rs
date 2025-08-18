@@ -63,18 +63,11 @@ impl RtDecoder {
         text_ab: bool,
         group: Group,
     ) {
-        self.handle_text_ab_change(text_ab, group);
+        if self.is_reset_needed(group, text_ab) {
+            self.reset(group, text_ab);
+        }
         let has_early_return = self.write_chars_to_buffer(index, &chars);
         self.update_received_segments(index, has_early_return);
-    }
-
-    fn handle_text_ab_change(&mut self, text_ab: bool, group: Group) {
-        if Some(text_ab) != self.text_ab {
-            self.buffer = EMPTY_RT;
-            self.current_group = Some(group);
-            self.received_segments.reset();
-            self.text_ab = Some(text_ab);
-        }
     }
 
     fn write_chars_to_buffer<const N: usize>(&mut self, index: usize, chars: &[u8; N]) -> bool {
@@ -99,5 +92,16 @@ impl RtDecoder {
                 .set_bit(index)
                 .expect("Index should be always be less than 16");
         }
+    }
+
+    fn is_reset_needed(&self, group: Group, text_ab: bool) -> bool {
+        self.current_group != Some(group) || self.text_ab != Some(text_ab)
+    }
+
+    fn reset(&mut self, current_group: Group, text_ab: bool) {
+        self.buffer = EMPTY_RT;
+        self.current_group = Some(current_group);
+        self.text_ab = Some(text_ab);
+        self.received_segments.reset();
     }
 }
