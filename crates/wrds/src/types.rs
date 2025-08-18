@@ -103,6 +103,12 @@ impl TryFrom<u8> for GroupType {
     }
 }
 
+/// Max size of Group A RadioText messages
+pub const MAX_RT_SIZE: usize = 64;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RadioText(pub [u8; MAX_RT_SIZE]);
+
 /// This represents the current state of the RDS metadata that has come in so far.
 /// Only the completed metadata is stored within this struct (e.g., incomplete PS segments).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -111,4 +117,5 @@ pub struct Metadata {
     pub pty: Option<ProgrammeType>,
     pub tp: Option<TrafficProgram>,
     pub ps: Option<[u8; 8]>,
+    pub rt: Option<RadioText>,
 }

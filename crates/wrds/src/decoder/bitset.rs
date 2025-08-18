@@ -11,10 +11,10 @@ pub type Result<T> = core::result::Result<T, Error>;
 /// Bitset represents a set of flags
 #[derive(Debug, Default)]
 pub struct Bitset<const N: usize> {
-    underlying: u8,
+    underlying: u16,
 }
 
-const MAX_POSITION: usize = u8::BITS as usize;
+const MAX_POSITION: usize = u16::BITS as usize;
 
 impl<const N: usize> Bitset<N> {
     /// Resets bitset to none set.
@@ -26,7 +26,7 @@ impl<const N: usize> Bitset<N> {
     ///
     /// # Errors
     /// Returns an error if position is outside of range
-    pub fn set(&mut self, position: usize) -> Result<()> {
+    pub fn set_bit(&mut self, position: usize) -> Result<()> {
         if position > N || position > MAX_POSITION {
             return Err(Error::OutofRange);
         }
@@ -34,9 +34,13 @@ impl<const N: usize> Bitset<N> {
         Ok(())
     }
 
+    pub fn set(&mut self, value: u16) {
+        self.underlying = value;
+    }
+
     /// Returns true if all the bits are set
     pub fn all(&self) -> bool {
-        let val: u16 = self.underlying.into();
+        let val: u32 = self.underlying.into();
         let all_set = (1 << N) - 1;
         all_set == val
     }

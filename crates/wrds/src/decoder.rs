@@ -1,5 +1,5 @@
 use crate::{
-    decoder::{mode_filter::ModeFilter, ps_decoder::PsDecoder},
+    decoder::{mode_filter::ModeFilter, ps_decoder::PsDecoder, rt_decoder::RtDecoder},
     types::{Block1, Block2, Block3, Block4, GroupVariant, Message, Metadata, ProgrammeIdentifier},
     ProgrammeType, TrafficProgram,
 };
@@ -9,6 +9,7 @@ use self::shared::Shared;
 mod bitset;
 mod mode_filter;
 mod ps_decoder;
+mod rt_decoder;
 mod shared;
 
 const PI_FILTER_COUNT: usize = 6;
@@ -25,7 +26,8 @@ pub struct Decoder {
     pi_filter: ModeFilter<ProgrammeIdentifier, PI_FILTER_COUNT>,
     pty_filter: ModeFilter<ProgrammeType, PTY_FILTER_COUNT>,
     tp_filter: ModeFilter<TrafficProgram, TP_FILTER_COUNT>,
-    ps_filter: PsDecoder,
+    ps_decoder: PsDecoder,
+    rt_decoder: RtDecoder,
 }
 
 impl Decoder {
@@ -35,7 +37,8 @@ impl Decoder {
             pi_filter: ModeFilter::new(PI_FILTER_MIN).unwrap(),
             pty_filter: ModeFilter::new(PTY_FILTER_MIN).unwrap(),
             tp_filter: ModeFilter::new(TP_FILTER_MIN).unwrap(),
-            ps_filter: PsDecoder::new(),
+            ps_decoder: PsDecoder::new(),
+            rt_decoder: RtDecoder::new(),
         }
     }
 
@@ -88,7 +91,34 @@ impl Decoder {
             if let Some(block4) = block4 {
                 let idx = block2.0 & 0b11;
                 let chars = block4.0.to_be_bytes();
-                self.ps_filter.push_segment(idx.into(), chars);
+                self.ps_decoder.push_segment(idx.into(), chars);
+            }
+        }
+
+        if shared.gt.0 == 2 {
+            let idx = block2.0 & 0b1111;
+            let text_ab = (block2.0 >> 4) == 0;
+            match shared.gv {
+                GroupVariant::A => {
+                    if block3.is_some() && block4.is_some() {
+                        let chars3: [u8; 2] = block3.unwrap().0.to_be_bytes();
+                        let chars4: [u8; 2] = block4.unwrap().0.to_be_bytes();
+                        let chars: [u8; 4] = {
+                            let mut whole = [0; 4];
+                            let (left, right) = whole.split_at_mut(chars3.len());
+                            left.copy_from_slice(&chars3);
+                            right.copy_from_slice(&chars4);
+                            whole
+                        };
+                        self.rt_decoder.push_segment_a(idx.into(), chars, text_ab);
+                    }
+                }
+                GroupVariant::B => {
+                    if let Some(block4) = block4 {
+                        let chars = block4.0.to_le_bytes();
+                        self.rt_decoder.push_segment_b(idx.into(), chars, text_ab);
+                    }
+                }
             }
         }
     }
@@ -98,7 +128,8 @@ impl Decoder {
             pi: self.pi_filter.mode(),
             pty: self.pty_filter.mode(),
             tp: self.tp_filter.mode(),
-            ps: self.ps_filter.confirmed(),
+            ps: self.ps_decoder.confirmed(),
+            rt: self.rt_decoder.confirmed(),
         }
     }
 }

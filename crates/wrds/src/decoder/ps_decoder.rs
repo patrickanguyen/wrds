@@ -33,7 +33,7 @@ impl PsDecoder {
         if index < self.segments.len() {
             self.segments[2 * index] = chars[0];
             self.segments[(2 * index) + 1] = chars[1];
-            self.is_chars_set.set(index).unwrap();
+            self.is_chars_set.set_bit(index).unwrap();
         }
     }
 
