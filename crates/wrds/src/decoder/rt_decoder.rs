@@ -50,10 +50,10 @@ impl RtDecoder {
     }
 
     pub fn confirmed(&self) -> Option<RadioText> {
-        if !self.received_segments.all() {
-            return None;
+        if self.received_segments.all() {
+            return Some(RadioText(self.buffer));
         }
-        Some(RadioText(self.buffer))
+        return None;
     }
 
     fn push_segment<const N: usize>(
