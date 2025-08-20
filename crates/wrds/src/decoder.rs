@@ -98,7 +98,8 @@ impl Decoder {
     }
 
     fn handle_ps_name(&mut self, shared: &Shared, block2: &Block2, block4: &Option<Block4>) {
-        if shared.gt.0 == 0 {
+        const GROUP_TYPE0: u8 = 0;
+        if shared.gt.0 == GROUP_TYPE0 {
             if let Some(block4) = block4 {
                 const PS_IDX_BITMASK: u16 = 0b11;
                 let idx = block2.0 & PS_IDX_BITMASK;
@@ -115,7 +116,8 @@ impl Decoder {
         block3: &Option<Block3>,
         block4: &Option<Block4>,
     ) {
-        if shared.gt.0 == 2 {
+        const GROUP_TYPE2: u8 = 2;
+        if shared.gt.0 == GROUP_TYPE2 {
             const RT_IDX_BITMASK: u16 = 0b1111;
             let index: usize = (block2.0 & RT_IDX_BITMASK).into();
             const TEXT_AB_BITMASK: u16 = 0x10;

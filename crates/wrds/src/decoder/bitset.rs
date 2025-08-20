@@ -41,8 +41,8 @@ impl<const N: usize> Bitset<N> {
         all_set == val
     }
 
-    /// Counts number of bits set
-    pub fn count(&self) -> usize {
-        self.underlying.count_ones() as usize
+    /// Returns the underlying value of the bitset
+    pub fn value(&self) -> u16 {
+        self.underlying
     }
 }
