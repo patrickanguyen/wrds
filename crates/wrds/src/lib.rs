@@ -8,4 +8,4 @@ mod error;
 pub use error::Error;
 
 mod types;
-pub use types::{Message, Metadata, ProgrammeIdentifier, ProgrammeType, TrafficProgram};
+pub use types::{Message, Metadata, ProgrammeIdentifier, ProgrammeType, RadioText, TrafficProgram};
