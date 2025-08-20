@@ -1,6 +1,8 @@
+use crate::types::RadioText;
+
 use crate::{
     decoder::bitset::Bitset,
-    types::{RadioText, MAX_RT_SIZE},
+    types::{MAX_RT_SIZE},
 };
 
 /// Empty RadioText Group A message
@@ -139,5 +141,105 @@ impl RtDecoder {
 
     fn is_rt_character_valid(c: u8) -> bool {
         c.is_ascii_alphanumeric() || c.is_ascii_punctuation() || c == SPACE
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_decoder_is_empty() {
+        let decoder = RtDecoder::new();
+        assert_eq!(decoder.current_group, None);
+        assert_eq!(decoder.text_ab, None);
+        assert_eq!(decoder.early_idx, None);
+        assert_eq!(decoder.buffer, EMPTY_RT);
+        assert_eq!(decoder.confirmed(), None);
+    }
+
+    #[test]
+    fn test_push_segment_a_and_confirmed_full() {
+        let mut decoder = RtDecoder::new();
+        let text_ab = true;
+        let chars = [b'T', b'E', b'S', b'T'];
+        for i in 0..NUM_SEGMENTS {
+            decoder.push_segment_a(i, chars, text_ab);
+        }
+        let expected_text = String::from("TEST".repeat(NUM_SEGMENTS));
+        let expected = RadioText(
+            heapless::String::from_iter(expected_text.chars())
+        );
+        assert_eq!(decoder.confirmed(), Some(expected));
+    }
+
+    #[test]
+    fn test_push_segment_b_and_confirmed_full() {
+        let mut decoder = RtDecoder::new();
+        let text_ab = false;
+        let chars = [b'O', b'K'];
+        for i in 0..NUM_SEGMENTS {
+            decoder.push_segment_b(i, chars, text_ab);
+        }
+        let expected_text = String::from("OK".repeat(NUM_SEGMENTS));
+        let expected = RadioText(
+            heapless::String::from_iter(expected_text.chars())
+        );
+        assert_eq!(decoder.confirmed(), Some(expected));
+    }
+
+    #[test]
+    fn test_early_return_truncates_text() {
+        let mut decoder = RtDecoder::new();
+        let text_ab = true;
+        // Fill first 3 segments, then insert EARLY_RETURN in the 4th
+        for i in 0..3 {
+            decoder.push_segment_a(i, [b'A', b'B', b'C', b'D'], text_ab);
+        }
+        decoder.push_segment_a(3, [b'E', b'F', EARLY_RETURN, b'H'], text_ab);
+        // Fill remaining segments (should be ignored)
+        for i in 4..NUM_SEGMENTS {
+            decoder.push_segment_a(i, [b'X', b'X', b'X', b'X'], text_ab);
+        }
+        let expected_text = String::from("ABCDABCDABCDEF"); // Up to EARLY_RETURN
+        // Confirmed should only include up to the early return
+        let expected = RadioText(
+            heapless::String::from_iter(expected_text.chars() /* up to index 11 */)
+        );
+        // Confirmed should only be available if all segments up to early_idx are received
+        assert_eq!(decoder.confirmed(), Some(expected));
+    }
+
+    #[test]
+    fn test_invalid_characters_are_replaced_with_space() {
+        let mut decoder = RtDecoder::new();
+        let text_ab = false;
+        let invalid = [0xFF, 0x80, b'A', b'B'];
+        decoder.push_segment_a(0, invalid, text_ab);
+        let mut expected = [b' '; MAX_RT_SIZE];
+        expected[0] = b' ';
+        expected[1] = b' ';
+        expected[2] = b'A';
+        expected[3] = b'B';
+        assert_eq!(&decoder.buffer[..4], &expected[..4]);
+    }
+
+    #[test]
+    fn test_reset_on_text_ab_change() {
+        let mut decoder = RtDecoder::new();
+        decoder.push_segment_a(0, [b'A', b'B', b'C', b'D'], true);
+        assert_eq!(decoder.text_ab, Some(true));
+        decoder.push_segment_a(1, [b'E', b'F', b'G', b'H'], false);
+        assert_eq!(decoder.text_ab, Some(false));
+        // After reset, only segment 1 should be set
+        assert_eq!(&decoder.buffer[..4], &[b' '; 4]);
+        assert_eq!(&decoder.buffer[4..8], &[b'E', b'F', b'G', b'H']);
+    }
+
+    #[test]
+    fn test_confirmed_none_if_not_all_segments_received() {
+        let mut decoder = RtDecoder::new();
+        decoder.push_segment_a(0, [b'A', b'B', b'C', b'D'], true);
+        // Only one segment, not enough for confirmation
+        assert_eq!(decoder.confirmed(), None);
     }
 }
