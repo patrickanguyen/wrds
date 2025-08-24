@@ -61,6 +61,8 @@ impl Decoder {
         self.pi_filter.reset();
         self.pty_filter.reset();
         self.tp_filter.reset();
+        self.ps_decoder.reset();
+        self.rt_decoder.reset();
     }
 
     /// Decode Block 1 as the Programme Identifier (PI) if provided.

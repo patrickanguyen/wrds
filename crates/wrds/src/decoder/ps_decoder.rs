@@ -47,4 +47,9 @@ impl PsDecoder {
         }
         Some(self.segments)
     }
+
+    pub fn reset(&mut self) {
+        self.segments = EMPTY_PS;
+        self.is_chars_set.reset();
+    }
 }

@@ -100,7 +100,7 @@ impl RtDecoder {
         group: Group,
     ) {
         if self.is_reset_needed(group, text_ab) {
-            self.reset(group, text_ab);
+            self.internal_reset(Some(group), Some(text_ab));
         }
         self.write_chars_to_buffer(index, &chars);
     }
@@ -131,10 +131,16 @@ impl RtDecoder {
         self.text_ab != Some(text_ab)
     }
 
-    fn reset(&mut self, current_group: Group, text_ab: bool) {
+    pub fn reset(&mut self) {
+        self.internal_reset(None, None);
+        self.current_group = None;
+        self.text_ab = None;
+    }
+
+    fn internal_reset(&mut self, current_group: Option<Group>, text_ab: Option<bool>) {
         self.buffer = EMPTY_RT;
-        self.current_group = Some(current_group);
-        self.text_ab = Some(text_ab);
+        self.current_group = current_group;
+        self.text_ab = text_ab;
         self.received_segments.reset();
         self.early_idx = None;
     }
