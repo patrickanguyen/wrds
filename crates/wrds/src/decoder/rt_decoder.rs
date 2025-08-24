@@ -1,9 +1,6 @@
 use crate::types::RadioText;
 
-use crate::{
-    decoder::bitset::Bitset,
-    types::{MAX_RT_SIZE},
-};
+use crate::{decoder::bitset::Bitset, types::MAX_RT_SIZE};
 
 /// Empty RadioText Group A message
 const EMPTY_RT: [u8; MAX_RT_SIZE] = [b' '; MAX_RT_SIZE];
@@ -119,7 +116,10 @@ impl RtDecoder {
             } else {
                 SPACE // Replace invalid characters with space
             };
-            debug_assert!(letter_idx < MAX_RT_SIZE, "Index should always be within bounds");
+            debug_assert!(
+                letter_idx < MAX_RT_SIZE,
+                "Index should always be within bounds"
+            );
             self.buffer[letter_idx] = rt_char;
         }
         self.received_segments
@@ -172,9 +172,7 @@ mod tests {
             decoder.push_segment_a(i, chars, text_ab);
         }
         let expected_text = String::from("TEST".repeat(NUM_SEGMENTS));
-        let expected = RadioText(
-            heapless::String::from_iter(expected_text.chars())
-        );
+        let expected = RadioText(heapless::String::from_iter(expected_text.chars()));
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
@@ -187,9 +185,7 @@ mod tests {
             decoder.push_segment_b(i, chars, text_ab);
         }
         let expected_text = String::from("OK".repeat(NUM_SEGMENTS));
-        let expected = RadioText(
-            heapless::String::from_iter(expected_text.chars())
-        );
+        let expected = RadioText(heapless::String::from_iter(expected_text.chars()));
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
@@ -207,10 +203,10 @@ mod tests {
             decoder.push_segment_a(i, [b'X', b'X', b'X', b'X'], text_ab);
         }
         let expected_text = String::from("ABCDABCDABCDEF"); // Up to EARLY_RETURN
-        // Confirmed should only include up to the early return
-        let expected = RadioText(
-            heapless::String::from_iter(expected_text.chars() /* up to index 11 */)
-        );
+                                                            // Confirmed should only include up to the early return
+        let expected = RadioText(heapless::String::from_iter(
+            expected_text.chars(), /* up to index 11 */
+        ));
         // Confirmed should only be available if all segments up to early_idx are received
         assert_eq!(decoder.confirmed(), Some(expected));
     }

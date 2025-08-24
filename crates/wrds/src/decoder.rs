@@ -87,8 +87,18 @@ impl Decoder {
         self.pty_filter.push(shared.pty);
         self.tp_filter.push(shared.tp);
 
-        self.handle_ps_name(&shared, block2, block4);
-        self.handle_radio_text(&shared, block2, block3, block4);
+        const GROUP_TYPE0: u8 = 0;
+        const GROUP_TYPE2: u8 = 2;
+
+        match shared.gt.0 {
+            GROUP_TYPE0 => {
+                if let Some(block4) = block4 {
+                    self.handle_ps_name(block2, block4);
+                }
+            }
+            GROUP_TYPE2 => self.handle_radio_text(&shared, block2, block3, block4),
+            _ => {}
+        }
     }
 
     fn handle_group_variant_b_pi(&mut self, shared: &Shared, block3: &Option<Block3>) {
@@ -99,16 +109,11 @@ impl Decoder {
         }
     }
 
-    fn handle_ps_name(&mut self, shared: &Shared, block2: &Block2, block4: &Option<Block4>) {
-        const GROUP_TYPE0: u8 = 0;
-        if shared.gt.0 == GROUP_TYPE0 {
-            if let Some(block4) = block4 {
-                const PS_IDX_BITMASK: u16 = 0b11;
-                let idx = block2.0 & PS_IDX_BITMASK;
-                let chars = block4.0.to_be_bytes();
-                self.ps_decoder.push_segment(idx.into(), chars);
-            }
-        }
+    fn handle_ps_name(&mut self, block2: &Block2, block4: &Block4) {
+        const PS_IDX_BITMASK: u16 = 0b11;
+        let idx = block2.0 & PS_IDX_BITMASK;
+        let chars = block4.0.to_be_bytes();
+        self.ps_decoder.push_segment(idx.into(), chars);
     }
 
     fn handle_radio_text(
@@ -118,19 +123,16 @@ impl Decoder {
         block3: &Option<Block3>,
         block4: &Option<Block4>,
     ) {
-        const GROUP_TYPE2: u8 = 2;
-        if shared.gt.0 == GROUP_TYPE2 {
-            const RT_IDX_BITMASK: u16 = 0b1111;
-            let index: usize = (block2.0 & RT_IDX_BITMASK).into();
-            const TEXT_AB_BITMASK: u16 = 0x10;
-            let text_ab = (block2.0 & TEXT_AB_BITMASK) > 0;
-            match shared.gv {
-                GroupVariant::A => {
-                    self.handle_radio_text_a(index, text_ab, block3, block4);
-                }
-                GroupVariant::B => {
-                    self.handle_radio_text_b(index, text_ab, block4);
-                }
+        const RT_IDX_BITMASK: u16 = 0b1111;
+        let index: usize = (block2.0 & RT_IDX_BITMASK).into();
+        const TEXT_AB_BITMASK: u16 = 0x10;
+        let text_ab = (block2.0 & TEXT_AB_BITMASK) > 0;
+        match shared.gv {
+            GroupVariant::A => {
+                self.handle_radio_text_a(index, text_ab, block3, block4);
+            }
+            GroupVariant::B => {
+                self.handle_radio_text_b(index, text_ab, block4);
             }
         }
     }
