@@ -113,7 +113,9 @@ impl Decoder {
         const PS_IDX_BITMASK: u16 = 0b11;
         let idx = block2.0 & PS_IDX_BITMASK;
         let chars = block4.0.to_be_bytes();
-        self.ps_decoder.push_segment(idx.into(), chars);
+        self.ps_decoder
+            .push_segment(idx.into(), chars)
+            .expect("PS segment index should always be valid after bit-masking");
     }
 
     fn handle_radio_text(
