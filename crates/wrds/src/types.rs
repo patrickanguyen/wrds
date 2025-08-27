@@ -103,15 +103,19 @@ impl TryFrom<u8> for GroupType {
     }
 }
 
-pub const PS_SIZE: usize = 8;
+pub const PS_LENGTH: usize = 8;
+
+pub const PS_BYTE_SIZE: usize = PS_LENGTH * size_of::<char>();
+
+pub type ProgrammeServiceNameString = heapless::String<PS_BYTE_SIZE>;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ProgrammeServiceName {
-    ps: heapless::String<PS_SIZE>,
+    ps: ProgrammeServiceNameString,
 }
 
 impl ProgrammeServiceName {
-    pub fn new(ps: heapless::String<PS_SIZE>) -> Self {
+    pub fn new(ps: ProgrammeServiceNameString) -> Self {
         Self { ps }
     }
 

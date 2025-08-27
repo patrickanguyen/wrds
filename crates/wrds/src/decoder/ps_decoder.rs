@@ -1,6 +1,6 @@
 use crate::{
     decoder::{bitset::Bitset, rds_charset::to_basic_rds_char},
-    types::ProgrammeServiceName,
+    types::{ProgrammeServiceName, ProgrammeServiceNameString},
 };
 
 /// Maximum of PS
@@ -71,7 +71,7 @@ impl PsDecoder {
         if !self.is_chars_set.all() {
             return None;
         }
-        let ps = heapless::String::from_iter(self.segments.iter());
+        let ps = ProgrammeServiceNameString::from_iter(self.segments.iter());
         Some(ProgrammeServiceName::new(ps))
     }
 
@@ -112,7 +112,7 @@ mod tests {
         assert!(decoder.is_chars_set.all());
         let expected = {
             let ps = String::from("ABCDEFGH");
-            ProgrammeServiceName::new(heapless::String::from_iter(ps.chars()))
+            ProgrammeServiceName::new(ProgrammeServiceNameString::from_iter(ps.chars()))
         };
         assert_eq!(decoder.confirmed(), Some(expected));
     }
@@ -165,7 +165,7 @@ mod tests {
         decoder.push_segment(0, [b'A', b'B']).unwrap();
         let expected = {
             let ps = String::from("ABCDEFGH");
-            ProgrammeServiceName::new(heapless::String::from_iter(ps.chars()))
+            ProgrammeServiceName::new(ProgrammeServiceNameString::from_iter(ps.chars()))
         };
         assert_eq!(decoder.confirmed(), Some(expected));
     }
@@ -177,5 +177,19 @@ mod tests {
         assert_eq!(decoder.push_segment(1, [b'A', 0x01]), Ok(()));
         assert_eq!(decoder.segments[0], ' ');
         assert_eq!(decoder.segments[3], ' ');
+    }
+
+    #[test]
+    fn test_non_ascii_full_string() {
+        let mut decoder = PsDecoder::new();
+        for i in 0..(decoder.segments.len() / 2) {
+            let _ = decoder.push_segment(i, [0xAE; 2]);
+        }
+        let expected = {
+            let buffer = ['→'; PS_SIZE];
+            let ps = ProgrammeServiceNameString::from_iter(buffer.iter());
+            ProgrammeServiceName::new(ps)
+        };
+        assert_eq!(decoder.confirmed(), Some(expected));
     }
 }
