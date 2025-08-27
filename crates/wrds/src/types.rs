@@ -68,7 +68,7 @@ impl TryFrom<u8> for ProgrammeType {
 /// All RDS messages are either A or B variant.
 /// If the message is type A, the PI is transmitted only on Block 1.
 /// Otherwise, the PI is transmitted both on Block 1 and Block 3.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum GroupVariant {
     A,
     B,
@@ -83,7 +83,7 @@ impl From<bool> for GroupVariant {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct GroupType(pub u8);
 
 impl TryFrom<u8> for GroupType {
@@ -103,11 +103,40 @@ impl TryFrom<u8> for GroupType {
     }
 }
 
+pub const PS_SIZE: usize = 8;
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct ProgrammeServiceName {
+    ps: heapless::String<PS_SIZE>,
+}
+
+impl ProgrammeServiceName {
+    pub fn new(ps: heapless::String<PS_SIZE>) -> Self {
+        Self { ps }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.ps
+    }
+}
+
 /// Max size of Group A RadioText messages
 pub const MAX_RT_SIZE: usize = 64;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RadioText(pub heapless::String<MAX_RT_SIZE>);
+pub struct RadioText {
+    rt: heapless::String<MAX_RT_SIZE>,
+}
+
+impl RadioText {
+    pub fn new(rt: heapless::String<MAX_RT_SIZE>) -> Self {
+        Self { rt }
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.rt
+    }
+}
 
 /// This represents the current state of the RDS metadata that has come in so far.
 /// Only the completed metadata is stored within this struct (e.g., incomplete PS segments).
@@ -116,6 +145,34 @@ pub struct Metadata {
     pub pi: Option<ProgrammeIdentifier>,
     pub pty: Option<ProgrammeType>,
     pub tp: Option<TrafficProgram>,
-    pub ps: Option<[u8; 8]>,
+    pub ps: Option<ProgrammeServiceName>,
     pub rt: Option<RadioText>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_programme_type_try_from() {
+        assert_eq!(ProgrammeType::try_from(0).unwrap(), ProgrammeType(0));
+        assert_eq!(ProgrammeType::try_from(15).unwrap(), ProgrammeType(15));
+        assert!(ProgrammeType::try_from(33).is_err());
+    }
+
+    #[test]
+    fn test_group_type_try_from() {
+        assert_eq!(GroupType::try_from(0).unwrap(), GroupType(0));
+        assert_eq!(GroupType::try_from(15).unwrap(), GroupType(15));
+        assert!(GroupType::try_from(16).is_err());
+    }
+
+    #[test]
+    fn test_message_new() {
+        let msg = Message::new(Some(0x1234), None, Some(0xABCD), Some(0xFFFF));
+        assert_eq!(msg.block1, Some(Block1(0x1234)));
+        assert_eq!(msg.block2, None);
+        assert_eq!(msg.block3, Some(Block3(0xABCD)));
+        assert_eq!(msg.block4, Some(Block4(0xFFFF)));
+    }
 }

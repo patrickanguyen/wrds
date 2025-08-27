@@ -84,7 +84,7 @@ impl RtDecoder {
                 .expect("self.buffer should always fit in heapless::Vec");
             let rt_string = heapless::String::from_utf8(vec)
                 .expect("self.buffer should always contain valid UTF-8");
-            return Some(RadioText(rt_string));
+            return Some(RadioText::new(rt_string));
         }
         None
     }
@@ -172,7 +172,7 @@ mod tests {
             decoder.push_segment_a(i, chars, text_ab);
         }
         let expected_text = String::from("TEST".repeat(NUM_SEGMENTS));
-        let expected = RadioText(heapless::String::from_iter(expected_text.chars()));
+        let expected = RadioText::new(heapless::String::from_iter(expected_text.chars()));
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
@@ -185,7 +185,7 @@ mod tests {
             decoder.push_segment_b(i, chars, text_ab);
         }
         let expected_text = String::from("OK".repeat(NUM_SEGMENTS));
-        let expected = RadioText(heapless::String::from_iter(expected_text.chars()));
+        let expected = RadioText::new(heapless::String::from_iter(expected_text.chars()));
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
@@ -204,7 +204,7 @@ mod tests {
         }
         let expected_text = String::from("ABCDABCDABCDEF"); // Up to EARLY_RETURN
                                                             // Confirmed should only include up to the early return
-        let expected = RadioText(heapless::String::from_iter(
+        let expected = RadioText::new(heapless::String::from_iter(
             expected_text.chars(), /* up to index 11 */
         ));
         // Confirmed should only be available if all segments up to early_idx are received
