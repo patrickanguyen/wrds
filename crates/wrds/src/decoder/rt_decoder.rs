@@ -77,8 +77,11 @@ impl RtDecoder {
         // Check if all required segments are received
         let required_segments = length / segment_size;
         let required_bitmask: u32 = (1 << required_segments) - 1;
-        let received_bitmask: u32 = self.received_segments.value().into();
-        if (received_bitmask & required_bitmask) == required_bitmask {
+        let received_bitmask: u32 = {
+            let value: u32 = self.received_segments.value().into();
+            value & required_bitmask
+        };
+        if received_bitmask == required_bitmask {
             let rt_string = RadioTextString::from_iter(&self.buffer[..length]);
             return Some(RadioText::new(rt_string, RadioTextPlusList::new()));
         }
@@ -102,10 +105,10 @@ impl RtDecoder {
         for (char_idx, letter) in chars.iter().enumerate() {
             let letter_idx = N * segment_idx + char_idx;
             let rt_char = to_basic_rds_char(*letter).unwrap_or(SPACE);
-            if Some(letter_idx) == self.early_idx {
-                self.early_idx = None;
-            } else if rt_char == EARLY_RETURN {
+            if rt_char == EARLY_RETURN {
                 self.early_idx = Some(letter_idx);
+            } else if Some(letter_idx) == self.early_idx {
+                self.early_idx = None;
             }
 
             debug_assert!(
