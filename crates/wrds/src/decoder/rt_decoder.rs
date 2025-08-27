@@ -1,20 +1,19 @@
-use crate::types::RadioText;
-
-use crate::{decoder::bitset::Bitset, types::MAX_RT_SIZE};
+use crate::decoder::{bitset::Bitset, rds_charset::to_basic_rds_char};
+use crate::types::{RadioText, RadioTextPlusList, RadioTextString, MAX_RT_LENGTH};
 
 /// Empty RadioText Group A message
-const EMPTY_RT: [u8; MAX_RT_SIZE] = [b' '; MAX_RT_SIZE];
+const EMPTY_RT: [char; MAX_RT_LENGTH] = [' '; MAX_RT_LENGTH];
 
 /// Carriage return character in RadioText
 ///
 /// This is used to indicate the end of a RadioText message for messages that are
 /// for messages that require less than 16 segments addresses to transfer.
-const EARLY_RETURN: u8 = b'\r';
+const EARLY_RETURN: char = '\r';
 
 /// Space character in RadioText
 ///
 /// Used to replace invalid characters and serve as padding.
-const SPACE: u8 = b' ';
+const SPACE: char = ' ';
 
 /// Number of segments in RadioText
 const NUM_SEGMENTS: usize = 16;
@@ -37,7 +36,7 @@ enum Group {
 
 #[derive(Debug)]
 pub struct RtDecoder {
-    buffer: [u8; MAX_RT_SIZE],
+    buffer: [char; MAX_RT_LENGTH],
     current_group: Option<Group>,
     text_ab: Option<bool>,
     received_segments: Bitset<NUM_SEGMENTS>,
@@ -71,8 +70,8 @@ impl RtDecoder {
         };
         let length = match (self.early_idx, self.current_group) {
             (Some(early), _) => early,
-            (None, Some(Group::A)) => MAX_RT_SIZE,
-            (None, Some(Group::B)) => MAX_RT_SIZE / 2,
+            (None, Some(Group::A)) => MAX_RT_LENGTH,
+            (None, Some(Group::B)) => MAX_RT_LENGTH / 2,
             (None, None) => return None, // No group set, cannot confirm
         };
         // Check if all required segments are received
@@ -80,11 +79,8 @@ impl RtDecoder {
         let required_bitmask: u32 = (1 << required_segments) - 1;
         let received_bitmask: u32 = self.received_segments.value().into();
         if (received_bitmask & required_bitmask) == required_bitmask {
-            let vec = heapless::Vec::from_slice(&self.buffer[..length])
-                .expect("self.buffer should always fit in heapless::Vec");
-            let rt_string = heapless::String::from_utf8(vec)
-                .expect("self.buffer should always contain valid UTF-8");
-            return Some(RadioText::new(rt_string, heapless::Vec::new()));
+            let rt_string = RadioTextString::from_iter(&self.buffer[..length]);
+            return Some(RadioText::new(rt_string, RadioTextPlusList::new()));
         }
         None
     }
@@ -105,19 +101,15 @@ impl RtDecoder {
     fn write_chars_to_buffer<const N: usize>(&mut self, segment_idx: usize, chars: &[u8; N]) {
         for (char_idx, letter) in chars.iter().enumerate() {
             let letter_idx = N * segment_idx + char_idx;
-            let rt_char = if Self::is_rt_character_valid(*letter) {
-                if Some(letter_idx) == self.early_idx {
-                    self.early_idx = None; // Reset early index if we are writing a valid character
-                }
-                *letter
-            } else if *letter == EARLY_RETURN {
+            let rt_char = to_basic_rds_char(*letter).unwrap_or(SPACE);
+            if Some(letter_idx) == self.early_idx {
+                self.early_idx = None;
+            } else if rt_char == EARLY_RETURN {
                 self.early_idx = Some(letter_idx);
-                *letter
-            } else {
-                SPACE // Replace invalid characters with space
-            };
+            }
+
             debug_assert!(
-                letter_idx < MAX_RT_SIZE,
+                letter_idx < MAX_RT_LENGTH,
                 "Index should always be within bounds"
             );
             self.buffer[letter_idx] = rt_char;
@@ -144,11 +136,8 @@ impl RtDecoder {
         self.received_segments.reset();
         self.early_idx = None;
     }
-
-    fn is_rt_character_valid(c: u8) -> bool {
-        c.is_ascii_alphanumeric() || c.is_ascii_punctuation() || c == SPACE
-    }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -173,8 +162,8 @@ mod tests {
         }
         let expected_text = String::from("TEST".repeat(NUM_SEGMENTS));
         let expected = RadioText::new(
-            heapless::String::from_iter(expected_text.chars()),
-            heapless::Vec::new(),
+            RadioTextString::from_iter(expected_text.chars()),
+            RadioTextPlusList::new(),
         );
         assert_eq!(decoder.confirmed(), Some(expected));
     }
@@ -189,8 +178,8 @@ mod tests {
         }
         let expected_text = String::from("OK".repeat(NUM_SEGMENTS));
         let expected = RadioText::new(
-            heapless::String::from_iter(expected_text.chars()),
-            heapless::Vec::new(),
+            RadioTextString::from_iter(expected_text.chars()),
+            RadioTextPlusList::new(),
         );
         assert_eq!(decoder.confirmed(), Some(expected));
     }
@@ -203,7 +192,7 @@ mod tests {
         for i in 0..3 {
             decoder.push_segment_a(i, [b'A', b'B', b'C', b'D'], text_ab);
         }
-        decoder.push_segment_a(3, [b'E', b'F', EARLY_RETURN, b'H'], text_ab);
+        decoder.push_segment_a(3, [b'E', b'F', b'\r', b'H'], text_ab);
         // Fill remaining segments (should be ignored)
         for i in 4..NUM_SEGMENTS {
             decoder.push_segment_a(i, [b'X', b'X', b'X', b'X'], text_ab);
@@ -211,8 +200,8 @@ mod tests {
         let expected_text = String::from("ABCDABCDABCDEF"); // Up to EARLY_RETURN
                                                             // Confirmed should only include up to the early return
         let expected = RadioText::new(
-            heapless::String::from_iter(expected_text.chars()),
-            heapless::Vec::new(),
+            RadioTextString::from_iter(expected_text.chars()),
+            RadioTextPlusList::new(),
         );
         // Confirmed should only be available if all segments up to early_idx are received
         assert_eq!(decoder.confirmed(), Some(expected));
@@ -222,13 +211,13 @@ mod tests {
     fn test_invalid_characters_are_replaced_with_space() {
         let mut decoder = RtDecoder::new();
         let text_ab = false;
-        let invalid = [0xFF, 0x80, b'A', b'B'];
+        let invalid = [0xFF, 0x02, b'A', b'B'];
         decoder.push_segment_a(0, invalid, text_ab);
-        let mut expected = [b' '; MAX_RT_SIZE];
-        expected[0] = b' ';
-        expected[1] = b' ';
-        expected[2] = b'A';
-        expected[3] = b'B';
+        let mut expected = [' '; MAX_RT_LENGTH];
+        expected[0] = ' ';
+        expected[1] = ' ';
+        expected[2] = 'A';
+        expected[3] = 'B';
         assert_eq!(&decoder.buffer[..4], &expected[..4]);
     }
 
@@ -240,8 +229,8 @@ mod tests {
         decoder.push_segment_a(1, [b'E', b'F', b'G', b'H'], false);
         assert_eq!(decoder.text_ab, Some(false));
         // After reset, only segment 1 should be set
-        assert_eq!(&decoder.buffer[..4], &[b' '; 4]);
-        assert_eq!(&decoder.buffer[4..8], &[b'E', b'F', b'G', b'H']);
+        assert_eq!(&decoder.buffer[..4], &[' '; 4]);
+        assert_eq!(&decoder.buffer[4..8], &['E', 'F', 'G', 'H']);
     }
 
     #[test]
@@ -268,19 +257,38 @@ mod tests {
     fn test_override_early_return() {
         let mut decoder = RtDecoder::new();
         let text_ab = true;
-        decoder.push_segment_a(0, [b'A', b'B', EARLY_RETURN, b'D'], text_ab);
+        decoder.push_segment_a(0, [b'A', b'B', b'\r', b'D'], text_ab);
         assert_eq!(decoder.early_idx, Some(2));
         assert_eq!(
             decoder.confirmed(),
             Some(RadioText::new(
-                heapless::String::from_iter("AB".chars()),
-                heapless::Vec::new()
+                RadioTextString::from_iter("AB".chars()),
+                RadioTextPlusList::new()
             ))
         );
         // Override EARLY_RETURN with valid character
         decoder.push_segment_a(0, [b'A', b'B', b'C', b'D'], text_ab);
         assert_eq!(decoder.early_idx, None);
-        let expected = [b'A', b'B', b'C', b'D'];
+        let expected = ['A', 'B', 'C', 'D'];
         assert_eq!(&decoder.buffer[..4], &expected);
+    }
+
+    #[test]
+    fn test_non_ascii_full_string() {
+        let mut decoder = RtDecoder::new();
+        for i in 0..NUM_SEGMENTS {
+            decoder.push_segment_a(i, [0xAE; 4], true);
+        }
+        let expected = {
+            let buffer = ['→'; MAX_RT_LENGTH];
+            String::from_iter(buffer.iter())
+        };
+        assert_eq!(
+            decoder.confirmed(),
+            Some(RadioText::new(
+                RadioTextString::from_iter(expected.chars()),
+                RadioTextPlusList::new()
+            ))
+        );
     }
 }

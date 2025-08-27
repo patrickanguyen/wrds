@@ -1,10 +1,13 @@
-use crate::{decoder::bitset::Bitset, types::ProgrammeServiceName};
+use crate::{
+    decoder::{bitset::Bitset, rds_charset::to_basic_rds_char},
+    types::ProgrammeServiceName,
+};
 
 /// Maximum of PS
 const PS_SIZE: usize = 8;
 
 /// Empty PS
-const EMPTY_PS: [u8; PS_SIZE] = [b' '; PS_SIZE];
+const EMPTY_PS: [char; PS_SIZE] = [' '; PS_SIZE];
 
 #[derive(Debug, PartialEq, Eq, thiserror::Error)]
 pub enum PsDecoderError {
@@ -17,7 +20,7 @@ pub type Result<T> = core::result::Result<T, PsDecoderError>;
 /// Decoder for Programme Service Name (PS)
 #[derive(Debug)]
 pub struct PsDecoder {
-    segments: [u8; PS_SIZE],
+    segments: [char; PS_SIZE],
     is_chars_set: Bitset<4>,
 }
 
@@ -33,7 +36,7 @@ impl PsDecoder {
     /// Push new PS segment
     ///
     /// Resets the segments if different segment is pushed when all segments are already set.
-    pub fn push_segment(&mut self, index: usize, chars: [u8; 2]) -> Result<()> {
+    pub fn push_segment(&mut self, index: usize, segment_bytes: [u8; 2]) -> Result<()> {
         if index >= (self.segments.len() / 2) {
             return Err(PsDecoderError::IndexOutOfBounds(index));
         }
@@ -41,23 +44,16 @@ impl PsDecoder {
         let current_index1 = 2 * index;
         let current_index2 = (2 * index) + 1;
 
+        let char1 = to_basic_rds_char(segment_bytes[0]).unwrap_or(' ');
+        let char2 = to_basic_rds_char(segment_bytes[1]).unwrap_or(' ');
+
+        let incoming = [char1, char2];
         let current = &self.segments[current_index1..=current_index2];
 
-        if self.is_chars_set.all() && current != chars {
+        if self.is_chars_set.all() && current != incoming {
             self.segments = EMPTY_PS;
             self.is_chars_set.reset();
         }
-
-        let char1 = if Self::is_valid_ps_char(chars[0]) {
-            chars[0]
-        } else {
-            b' '
-        };
-        let char2 = if Self::is_valid_ps_char(chars[1]) {
-            chars[1]
-        } else {
-            b' '
-        };
 
         self.segments[current_index1] = char1;
         self.segments[current_index2] = char2;
@@ -65,10 +61,6 @@ impl PsDecoder {
             .set_bit(index)
             .expect("The index should always be valid");
         Ok(())
-    }
-
-    fn is_valid_ps_char(c: u8) -> bool {
-        c.is_ascii_graphic() || c == b' '
     }
 
     /// Confirms if complete PS has been ready.
@@ -79,10 +71,7 @@ impl PsDecoder {
         if !self.is_chars_set.all() {
             return None;
         }
-        let vec = heapless::Vec::from_slice(&self.segments)
-            .expect("self.buffer should always fit in heapless::Vec");
-        let ps = heapless::String::from_utf8(vec)
-            .expect("self.buffer should always contain valid UTF-8");
+        let ps = heapless::String::from_iter(self.segments.iter());
         Some(ProgrammeServiceName::new(ps))
     }
 
@@ -107,8 +96,8 @@ mod tests {
     fn test_push_segment_sets_segments() {
         let mut decoder = PsDecoder::new();
         decoder.push_segment(0, [b'A', b'B']).unwrap();
-        assert_eq!(decoder.segments[0], b'A');
-        assert_eq!(decoder.segments[1], b'B');
+        assert_eq!(decoder.segments[0], 'A');
+        assert_eq!(decoder.segments[1], 'B');
         assert!(!decoder.is_chars_set.all());
         assert_eq!(decoder.confirmed(), None);
     }
@@ -137,8 +126,8 @@ mod tests {
         assert!(decoder.is_chars_set.all());
         // Next push should reset
         decoder.push_segment(0, [b'A', b'B']).unwrap();
-        assert_eq!(decoder.segments[0], b'A');
-        assert_eq!(decoder.segments[1], b'B');
+        assert_eq!(decoder.segments[0], 'A');
+        assert_eq!(decoder.segments[1], 'B');
         assert!(!decoder.is_chars_set.all());
         assert_eq!(decoder.confirmed(), None);
     }
@@ -185,8 +174,8 @@ mod tests {
     fn test_push_invalid_character() {
         let mut decoder = PsDecoder::new();
         assert_eq!(decoder.push_segment(0, [0x1F, b'B']), Ok(()));
-        assert_eq!(decoder.push_segment(1, [b'A', 0x0A]), Ok(()));
-        assert_eq!(decoder.segments[0], b' ');
-        assert_eq!(decoder.segments[3], b' ');
+        assert_eq!(decoder.push_segment(1, [b'A', 0x01]), Ok(()));
+        assert_eq!(decoder.segments[0], ' ');
+        assert_eq!(decoder.segments[3], ' ');
     }
 }

@@ -9,6 +9,7 @@ use self::shared::Shared;
 mod bitset;
 mod mode_filter;
 mod ps_decoder;
+mod rds_charset;
 mod rt_decoder;
 mod shared;
 

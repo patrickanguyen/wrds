@@ -6,4 +6,4 @@ license = "MIT OR Apache 2.0"
 
 [dependencies]
 thiserror = { version = "2", default-features = false }
-heapless = "0.8"
+heapless = "0.9"

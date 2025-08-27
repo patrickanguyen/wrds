@@ -121,21 +121,24 @@ impl ProgrammeServiceName {
 }
 
 /// Max size of Group A RadioText messages
-pub const MAX_RT_SIZE: usize = 64;
+pub const MAX_RT_LENGTH: usize = 64;
+
+pub const MAX_RT_BYTE_SIZE: usize = MAX_RT_LENGTH * size_of::<char>();
 
 pub const MAX_RT_PLUS_TAGS: usize = 16;
 
+pub type RadioTextString = heapless::String<MAX_RT_BYTE_SIZE>;
+
+pub type RadioTextPlusList = heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RadioText {
-    rt: heapless::String<MAX_RT_SIZE>,
-    rt_plus: heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>,
+    rt: RadioTextString,
+    rt_plus: RadioTextPlusList,
 }
 
 impl RadioText {
-    pub fn new(
-        rt: heapless::String<MAX_RT_SIZE>,
-        rt_plus: heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>,
-    ) -> Self {
+    pub fn new(rt: RadioTextString, rt_plus: RadioTextPlusList) -> Self {
         Self { rt, rt_plus }
     }
 
