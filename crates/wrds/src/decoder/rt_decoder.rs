@@ -84,7 +84,7 @@ impl RtDecoder {
                 .expect("self.buffer should always fit in heapless::Vec");
             let rt_string = heapless::String::from_utf8(vec)
                 .expect("self.buffer should always contain valid UTF-8");
-            return Some(RadioText::new(rt_string));
+            return Some(RadioText::new(rt_string, heapless::Vec::new()));
         }
         None
     }
@@ -172,7 +172,10 @@ mod tests {
             decoder.push_segment_a(i, chars, text_ab);
         }
         let expected_text = String::from("TEST".repeat(NUM_SEGMENTS));
-        let expected = RadioText::new(heapless::String::from_iter(expected_text.chars()));
+        let expected = RadioText::new(
+            heapless::String::from_iter(expected_text.chars()),
+            heapless::Vec::new(),
+        );
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
@@ -185,7 +188,10 @@ mod tests {
             decoder.push_segment_b(i, chars, text_ab);
         }
         let expected_text = String::from("OK".repeat(NUM_SEGMENTS));
-        let expected = RadioText::new(heapless::String::from_iter(expected_text.chars()));
+        let expected = RadioText::new(
+            heapless::String::from_iter(expected_text.chars()),
+            heapless::Vec::new(),
+        );
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
@@ -204,9 +210,10 @@ mod tests {
         }
         let expected_text = String::from("ABCDABCDABCDEF"); // Up to EARLY_RETURN
                                                             // Confirmed should only include up to the early return
-        let expected = RadioText::new(heapless::String::from_iter(
-            expected_text.chars(), /* up to index 11 */
-        ));
+        let expected = RadioText::new(
+            heapless::String::from_iter(expected_text.chars()),
+            heapless::Vec::new(),
+        );
         // Confirmed should only be available if all segments up to early_idx are received
         assert_eq!(decoder.confirmed(), Some(expected));
     }
@@ -243,5 +250,37 @@ mod tests {
         decoder.push_segment_a(0, [b'A', b'B', b'C', b'D'], true);
         // Only one segment, not enough for confirmation
         assert_eq!(decoder.confirmed(), None);
+    }
+
+    #[test]
+    fn test_reset() {
+        let mut decoder = RtDecoder::new();
+        decoder.push_segment_a(0, [b'A', b'B', b'C', b'D'], true);
+        decoder.reset();
+        assert_eq!(decoder.current_group, None);
+        assert_eq!(decoder.text_ab, None);
+        assert_eq!(decoder.early_idx, None);
+        assert_eq!(decoder.buffer, EMPTY_RT);
+        assert_eq!(decoder.confirmed(), None);
+    }
+
+    #[test]
+    fn test_override_early_return() {
+        let mut decoder = RtDecoder::new();
+        let text_ab = true;
+        decoder.push_segment_a(0, [b'A', b'B', EARLY_RETURN, b'D'], text_ab);
+        assert_eq!(decoder.early_idx, Some(2));
+        assert_eq!(
+            decoder.confirmed(),
+            Some(RadioText::new(
+                heapless::String::from_iter("AB".chars()),
+                heapless::Vec::new()
+            ))
+        );
+        // Override EARLY_RETURN with valid character
+        decoder.push_segment_a(0, [b'A', b'B', b'C', b'D'], text_ab);
+        assert_eq!(decoder.early_idx, None);
+        let expected = [b'A', b'B', b'C', b'D'];
+        assert_eq!(&decoder.buffer[..4], &expected);
     }
 }

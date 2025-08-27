@@ -123,18 +123,193 @@ impl ProgrammeServiceName {
 /// Max size of Group A RadioText messages
 pub const MAX_RT_SIZE: usize = 64;
 
+pub const MAX_RT_PLUS_TAGS: usize = 16;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RadioText {
     rt: heapless::String<MAX_RT_SIZE>,
+    rt_plus: heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>,
 }
 
 impl RadioText {
-    pub fn new(rt: heapless::String<MAX_RT_SIZE>) -> Self {
-        Self { rt }
+    pub fn new(
+        rt: heapless::String<MAX_RT_SIZE>,
+        rt_plus: heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>,
+    ) -> Self {
+        Self { rt, rt_plus }
     }
 
     pub fn as_str(&self) -> &str {
         &self.rt
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub struct RadioTextPlusTag {
+    content_type: RadioTextPlusContentType,
+    start_index: usize,
+    length: usize,
+}
+
+impl RadioTextPlusTag {
+    pub fn new(content_type: RadioTextPlusContentType, start_index: usize, length: usize) -> Self {
+        Self {
+            content_type,
+            start_index,
+            length,
+        }
+    }
+
+    pub fn content_type(&self) -> RadioTextPlusContentType {
+        self.content_type
+    }
+
+    pub fn start_index(&self) -> usize {
+        self.start_index
+    }
+
+    pub fn length(&self) -> usize {
+        self.length
+    }
+}
+
+/// Content types for RadioTextPlus (RT+).
+///
+/// Radio Text Plus (RT+) is an extension of RadioText (RT) that enable receivers
+/// to identify specific types of information within the RadioText string.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum RadioTextPlusContentType {
+    Dummy,
+    Title,
+    Album,
+    TrackNumber,
+    Artist,
+    Composition,
+    Movement,
+    Conductor,
+    Composer,
+    Band,
+    Comment,
+    Genre,
+    News,
+    NewsLocal,
+    StockMarket,
+    Sport,
+    Lottery,
+    Horoscope,
+    DailyDiversion,
+    Health,
+    Event,
+    Scene,
+    Cinema,
+    Tv,
+    DateTime,
+    Weather,
+    Traffic,
+    Alarm,
+    Advertisement,
+    Url,
+    Other,
+    ShortStationName,
+    LongStationName,
+    NowProgramme,
+    NextProgramme,
+    ProgrammePart,
+    ProgrammeHost,
+    ProgrammeEditorialStaff,
+    ProgrammeFrequency,
+    ProgrammeHomepage,
+    ProgrammeSubchannel,
+    PhoneHotline,
+    PhoneStudio,
+    PhoneOther,
+    SmsStudio,
+    SmsOther,
+    EmailHotline,
+    EmailStudio,
+    EmailOther,
+    MmsOther,
+    Chat,
+    ChatCentre,
+    VoteQuestion,
+    VoteCentre,
+    Place,
+    Appointment,
+    Identifier,
+    Purchase,
+    GetData,
+}
+
+impl TryFrom<u8> for RadioTextPlusContentType {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(RadioTextPlusContentType::Dummy),
+            1 => Ok(RadioTextPlusContentType::Title),
+            2 => Ok(RadioTextPlusContentType::Album),
+            3 => Ok(RadioTextPlusContentType::TrackNumber),
+            4 => Ok(RadioTextPlusContentType::Artist),
+            5 => Ok(RadioTextPlusContentType::Composition),
+            6 => Ok(RadioTextPlusContentType::Movement),
+            7 => Ok(RadioTextPlusContentType::Conductor),
+            8 => Ok(RadioTextPlusContentType::Composer),
+            9 => Ok(RadioTextPlusContentType::Band),
+            10 => Ok(RadioTextPlusContentType::Comment),
+            11 => Ok(RadioTextPlusContentType::Genre),
+            12 => Ok(RadioTextPlusContentType::News),
+            13 => Ok(RadioTextPlusContentType::NewsLocal),
+            14 => Ok(RadioTextPlusContentType::StockMarket),
+            15 => Ok(RadioTextPlusContentType::Sport),
+            16 => Ok(RadioTextPlusContentType::Lottery),
+            17 => Ok(RadioTextPlusContentType::Horoscope),
+            18 => Ok(RadioTextPlusContentType::DailyDiversion),
+            19 => Ok(RadioTextPlusContentType::Health),
+            20 => Ok(RadioTextPlusContentType::Event),
+            21 => Ok(RadioTextPlusContentType::Scene),
+            22 => Ok(RadioTextPlusContentType::Cinema),
+            23 => Ok(RadioTextPlusContentType::Tv),
+            24 => Ok(RadioTextPlusContentType::DateTime),
+            25 => Ok(RadioTextPlusContentType::Weather),
+            26 => Ok(RadioTextPlusContentType::Traffic),
+            27 => Ok(RadioTextPlusContentType::Alarm),
+            28 => Ok(RadioTextPlusContentType::Advertisement),
+            29 => Ok(RadioTextPlusContentType::Url),
+            30 => Ok(RadioTextPlusContentType::Other),
+            31 => Ok(RadioTextPlusContentType::ShortStationName),
+            32 => Ok(RadioTextPlusContentType::LongStationName),
+            33 => Ok(RadioTextPlusContentType::NowProgramme),
+            34 => Ok(RadioTextPlusContentType::NextProgramme),
+            35 => Ok(RadioTextPlusContentType::ProgrammePart),
+            36 => Ok(RadioTextPlusContentType::ProgrammeHost),
+            37 => Ok(RadioTextPlusContentType::ProgrammeEditorialStaff),
+            38 => Ok(RadioTextPlusContentType::ProgrammeFrequency),
+            39 => Ok(RadioTextPlusContentType::ProgrammeHomepage),
+            40 => Ok(RadioTextPlusContentType::ProgrammeSubchannel),
+            41 => Ok(RadioTextPlusContentType::PhoneHotline),
+            42 => Ok(RadioTextPlusContentType::PhoneStudio),
+            43 => Ok(RadioTextPlusContentType::PhoneOther),
+            44 => Ok(RadioTextPlusContentType::SmsStudio),
+            45 => Ok(RadioTextPlusContentType::SmsOther),
+            46 => Ok(RadioTextPlusContentType::EmailHotline),
+            47 => Ok(RadioTextPlusContentType::EmailStudio),
+            48 => Ok(RadioTextPlusContentType::EmailOther),
+            49 => Ok(RadioTextPlusContentType::MmsOther),
+            50 => Ok(RadioTextPlusContentType::Chat),
+            51 => Ok(RadioTextPlusContentType::ChatCentre),
+            52 => Ok(RadioTextPlusContentType::VoteQuestion),
+            53 => Ok(RadioTextPlusContentType::VoteCentre),
+            // 54-59 are reserved or private
+            59 => Ok(RadioTextPlusContentType::Place),
+            60 => Ok(RadioTextPlusContentType::Appointment),
+            61 => Ok(RadioTextPlusContentType::Identifier),
+            62 => Ok(RadioTextPlusContentType::Purchase),
+            63 => Ok(RadioTextPlusContentType::GetData),
+            _ => Err(Error::InvalidInput {
+                field: "RadioTextPlusTag must a value within 0-53, 59-63",
+                value: value.into(),
+            }),
+        }
     }
 }
 
@@ -165,6 +340,28 @@ mod tests {
         assert_eq!(GroupType::try_from(0).unwrap(), GroupType(0));
         assert_eq!(GroupType::try_from(15).unwrap(), GroupType(15));
         assert!(GroupType::try_from(16).is_err());
+    }
+
+    #[test]
+    fn test_radio_text_plus_content_type_try_from() {
+        assert_eq!(
+            RadioTextPlusContentType::try_from(0).unwrap(),
+            RadioTextPlusContentType::Dummy
+        );
+        assert_eq!(
+            RadioTextPlusContentType::try_from(53).unwrap(),
+            RadioTextPlusContentType::VoteCentre
+        );
+        assert_eq!(
+            RadioTextPlusContentType::try_from(59).unwrap(),
+            RadioTextPlusContentType::Place
+        );
+        assert_eq!(
+            RadioTextPlusContentType::try_from(63).unwrap(),
+            RadioTextPlusContentType::GetData
+        );
+        assert!(RadioTextPlusContentType::try_from(54).is_err());
+        assert!(RadioTextPlusContentType::try_from(64).is_err());
     }
 
     #[test]
