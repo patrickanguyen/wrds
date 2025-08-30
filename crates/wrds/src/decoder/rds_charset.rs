@@ -1,8 +1,19 @@
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+use core::{error::Error, fmt};
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum RdsCharError {
-    #[error("Invalid RDS character {0}")]
     InvalidRdsChar(u8),
 }
+
+impl fmt::Display for RdsCharError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RdsCharError::InvalidRdsChar(c) => write!(f, "Invalid RDS character {c}"),
+        }
+    }
+}
+
+impl Error for RdsCharError {}
 
 pub type Result<T> = core::result::Result<T, RdsCharError>;
 

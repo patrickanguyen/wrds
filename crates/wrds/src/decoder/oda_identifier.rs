@@ -1,17 +1,30 @@
+use core::{error::Error, fmt};
+
 use heapless::index_map::FnvIndexMap;
 
 use crate::types::{GroupType, GroupVariant};
 
 /// ODA (Open Data Applications) application error
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum OdaError {
     /// Error for unknown ODA application identifier (AID)
-    #[error("Unknown ODA application identifier: {0:#04x}")]
     UnknownAid(u16),
     /// Error for exceeding maximum number of tracked ODA applications
-    #[error("Exceeded maximum number of tracked ODA applications")]
     MaxAppsExceeded,
 }
+
+impl fmt::Display for OdaError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnknownAid(aid) => write!(f, "Unknown ODA application identifier: {aid:#04x}"),
+            Self::MaxAppsExceeded => {
+                write!(f, "Exceeded maximum number of tracked ODA applications")
+            }
+        }
+    }
+}
+
+impl Error for OdaError {}
 
 /// RadioText Plus application identifier (AID)
 const RT_PLUS_AID: u16 = 0x4BD7;

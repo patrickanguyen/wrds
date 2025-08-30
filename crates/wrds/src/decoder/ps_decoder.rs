@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::{
     decoder::{bitset::Bitset, rds_charset::to_basic_rds_char},
     types::{ProgrammeServiceName, ProgrammeServiceNameString},
@@ -9,10 +11,17 @@ const PS_SIZE: usize = 8;
 /// Empty PS
 const EMPTY_PS: [char; PS_SIZE] = [' '; PS_SIZE];
 
-#[derive(Debug, PartialEq, Eq, thiserror::Error)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum PsDecoderError {
-    #[error("Index out of bounds: {0}")]
     IndexOutOfBounds(usize),
+}
+
+impl fmt::Display for PsDecoderError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::IndexOutOfBounds(idx) => write!(f, "Index out of bounds {idx}"),
+        }
+    }
 }
 
 pub type Result<T> = core::result::Result<T, PsDecoderError>;
