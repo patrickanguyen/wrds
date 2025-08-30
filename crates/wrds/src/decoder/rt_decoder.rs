@@ -1,5 +1,7 @@
 use crate::decoder::{bitset::Bitset, rds_charset::to_basic_rds_char};
-use crate::types::{RadioText, RadioTextPlusList, RadioTextString, MAX_RT_LENGTH};
+use crate::types::{
+    RadioText, RadioTextPlusList, RadioTextPlusTag, RadioTextString, MAX_RT_LENGTH,
+};
 
 /// Empty RadioText Group A message
 const EMPTY_RT: [char; MAX_RT_LENGTH] = [' '; MAX_RT_LENGTH];
@@ -41,6 +43,8 @@ pub struct RtDecoder {
     text_ab: Option<bool>,
     received_segments: Bitset<NUM_SEGMENTS>,
     early_idx: Option<usize>,
+    rt_tag1: Option<RadioTextPlusTag>,
+    rt_tag2: Option<RadioTextPlusTag>,
 }
 
 impl RtDecoder {
@@ -51,6 +55,8 @@ impl RtDecoder {
             text_ab: None,
             received_segments: Bitset::default(),
             early_idx: None,
+            rt_tag1: None,
+            rt_tag2: None,
         }
     }
 
@@ -83,9 +89,21 @@ impl RtDecoder {
         };
         if received_bitmask == required_bitmask {
             let rt_string = RadioTextString::from_iter(&self.buffer[..length]);
-            return Some(RadioText::new(rt_string, RadioTextPlusList::new()));
+            let rt_plus = {
+                if self.rt_tag1.is_some() && self.rt_tag2.is_some() {
+                    RadioTextPlusList::from_array([self.rt_tag1.unwrap(), self.rt_tag2.unwrap()])
+                } else {
+                    RadioTextPlusList::new()
+                }
+            };
+            return Some(RadioText::new(rt_string, rt_plus));
         }
         None
+    }
+
+    pub fn push_rt_plus_tags(&mut self, tag1: RadioTextPlusTag, tag2: RadioTextPlusTag) {
+        self.rt_tag1 = Some(tag1);
+        self.rt_tag2 = Some(tag2);
     }
 
     fn push_segment<const N: usize>(
@@ -130,6 +148,8 @@ impl RtDecoder {
         self.internal_reset(None, None);
         self.current_group = None;
         self.text_ab = None;
+        self.rt_tag1 = None;
+        self.rt_tag2 = None;
     }
 
     fn internal_reset(&mut self, current_group: Option<Group>, text_ab: Option<bool>) {

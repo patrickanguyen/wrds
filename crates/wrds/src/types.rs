@@ -129,7 +129,7 @@ pub const MAX_RT_LENGTH: usize = 64;
 
 pub const MAX_RT_BYTE_SIZE: usize = MAX_RT_LENGTH * size_of::<char>();
 
-pub const MAX_RT_PLUS_TAGS: usize = 16;
+pub const MAX_RT_PLUS_TAGS: usize = 2;
 
 pub type RadioTextString = heapless::String<MAX_RT_BYTE_SIZE>;
 
@@ -148,6 +148,10 @@ impl RadioText {
 
     pub fn as_str(&self) -> &str {
         &self.rt
+    }
+
+    pub fn rt_plus(&self) -> &[RadioTextPlusTag] {
+        &self.rt_plus
     }
 }
 
