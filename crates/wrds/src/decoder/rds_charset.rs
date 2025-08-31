@@ -92,6 +92,80 @@ pub fn to_basic_rds_char(byte: u8) -> Result<char> {
     const SUPERSCRIPT_TWO: u8 = 0xB2;
     const SUPERSCRIPT_THREE: u8 = 0xB3;
     const PLUS_MINUS_SIGN: u8 = 0xB4;
+    const CAPITAL_I_DOT_ABOVE: u8 = 0xB5;
+    const SMALL_N_ACUTE: u8 = 0xB6;
+    const SMALL_U_DOUBLE_ACUTE: u8 = 0xB7;
+    const MIKRO_SIGN: u8 = 0xB8;
+    const INVERTED_QUESTION_MARK: u8 = 0xB9;
+    const DIVISION_SIGN: u8 = 0xBA;
+    const DEGREE_SIGN: u8 = 0xBB;
+    const FRACTION_QUARTER: u8 = 0xBC;
+    const FRACTION_HALF: u8 = 0xBD;
+    const FRACTION_THREE_QUARTERS: u8 = 0xBE;
+    const SECTION_SIGN: u8 = 0xBF;
+    const CAPTIAL_A_ACUTE: u8 = 0xC0;
+    const CAPITAL_A_GRAVE: u8 = 0xC1;
+    const CAPITAL_E_ACUTE: u8 = 0xC2;
+    const CAPITAL_E_GRAVE: u8 = 0xC3;
+    const CAPITAL_I_ACUTE: u8 = 0xC4;
+    const CAPITAL_I_GRAVE: u8 = 0xC5;
+    const CAPITAL_O_ACUTE: u8 = 0xC6;
+    const CAPITAL_O_GRAVE: u8 = 0xC7;
+    const CAPITAL_U_ACUTE: u8 = 0xC8;
+    const CAPITAL_U_GRAVE: u8 = 0xC9;
+    const CAPITAL_R_CARON: u8 = 0xCA;
+    const CAPITAL_C_CARON: u8 = 0xCB;
+    const CAPITAL_S_CARON: u8 = 0xCC;
+    const CAPITAL_Z_CARON: u8 = 0xCD;
+    const CAPITAL_ETH: u8 = 0xCE;
+    const CAPITAL_L_MIDDLE_DOT: u8 = 0xCF;
+    const CAPITAL_A_CIRCUMFLEX: u8 = 0xD0;
+    const CAPITAL_A_DIAERESIS: u8 = 0xD1;
+    const CAPITAL_E_CIRCUMFLEX: u8 = 0xD2;
+    const CAPITAL_A_DIAERESIS_2: u8 = 0xD3;
+    const CAPITAL_I_CIRCUMFLEX: u8 = 0xD4;
+    const CAPITAL_I_DIAERESIS: u8 = 0xD5;
+    const CAPITAL_O_CIRCUMFLEX: u8 = 0xD6;
+    const CAPITAL_O_DIAERESIS: u8 = 0xD7;
+    const CAPITAL_U_CIRCUMFLEX: u8 = 0xD8;
+    const CAPITAL_U_DIAERESIS: u8 = 0xD9;
+    const SMALL_R_CARON: u8 = 0xDA;
+    const SMALL_C_CARON: u8 = 0xDB;
+    const SMALL_S_CARON: u8 = 0xDC;
+    const SMALL_Z_CARON: u8 = 0xDD;
+    const SMALL_D_STROKE: u8 = 0xDE;
+    const SMALL_L_MIDDLE_DOT: u8 = 0xDF;
+    const CAPITAL_A_TILDE: u8 = 0xE0;
+    const CAPITAL_A_RING: u8 = 0xE1;
+    const CAPITAL_AE: u8 = 0xE2;
+    const CAPITAL_LIGATURE_OE: u8 = 0xE3;
+    const SMALL_Y_CIRCUMFLEX: u8 = 0xE4;
+    const CAPITAL_Y_ACUTE: u8 = 0xE5;
+    const CAPITAL_O_TILDE: u8 = 0xE6;
+    const CAPITAL_O_STROKE: u8 = 0xE7;
+    const CAPITAL_THORN: u8 = 0xE8;
+    const CAPITAL_ENG: u8 = 0xE9;
+    const CAPITAL_R_ACUTE: u8 = 0xEA;
+    const SMALL_C_ACUTE: u8 = 0xEB;
+    const CAPITAL_S_ACUTE: u8 = 0xEC;
+    const CAPITAL_Z_ACUTE: u8 = 0xED;
+    const CAPITAL_T_STROKE: u8 = 0xEE;
+    const SMALL_ETH: u8 = 0xEF;
+    const SMALL_A_TILDE: u8 = 0xF0;
+    const SMALL_A_RING: u8 = 0xF1;
+    const SMALL_AE: u8 = 0xF2;
+    const SMALL_LIGATURE_OE: u8 = 0xF3;
+    const SMALL_W_CIRCUMFLEX: u8 = 0xF4;
+    const SMALL_Y_ACUTE: u8 = 0xF5;
+    const SMALL_O_TILDE: u8 = 0xF6;
+    const SMALL_O_STROKE: u8 = 0xF7;
+    const SMALL_THORN: u8 = 0xF8;
+    const SMALL_ENG: u8 = 0xF9;
+    const SMALL_R_ACUTE: u8 = 0xFA;
+    const SMALL_C_ACUTE_2: u8 = 0xFB;
+    const SMALL_S_ACUTE: u8 = 0xFC;
+    const SMALL_Z_ACUTE: u8 = 0xFD;
+    const SMALL_T_STROKE: u8 = 0xFE;
 
     match byte {
         LINE_FEED | CARRIAGE_RETURN => Ok(char::from(byte)),
@@ -153,7 +227,148 @@ pub fn to_basic_rds_char(byte: u8) -> Result<char> {
         SUPERSCRIPT_TWO => Ok('²'),
         SUPERSCRIPT_THREE => Ok('³'),
         PLUS_MINUS_SIGN => Ok('±'),
-        PRINTABLE_MIN..PRINTABLE_MAX => Ok(char::from(byte)),
+        CAPITAL_I_DOT_ABOVE => Ok('İ'),
+        SMALL_N_ACUTE => Ok('ń'),
+        SMALL_U_DOUBLE_ACUTE => Ok('ű'),
+        MIKRO_SIGN => Ok('µ'),
+        INVERTED_QUESTION_MARK => Ok('¿'),
+        DIVISION_SIGN => Ok('÷'),
+        DEGREE_SIGN => Ok('º'),
+        FRACTION_QUARTER => Ok('¼'),
+        FRACTION_HALF => Ok('½'),
+        FRACTION_THREE_QUARTERS => Ok('¾'),
+        SECTION_SIGN => Ok('§'),
+        CAPTIAL_A_ACUTE => Ok('Á'),
+        CAPITAL_A_GRAVE => Ok('À'),
+        CAPITAL_E_ACUTE => Ok('É'),
+        CAPITAL_E_GRAVE => Ok('È'),
+        CAPITAL_I_ACUTE => Ok('Í'),
+        CAPITAL_I_GRAVE => Ok('Ì'),
+        CAPITAL_O_ACUTE => Ok('Ó'),
+        CAPITAL_O_GRAVE => Ok('Ò'),
+        CAPITAL_U_ACUTE => Ok('Ú'),
+        CAPITAL_U_GRAVE => Ok('Ù'),
+        CAPITAL_R_CARON => Ok('Ř'),
+        CAPITAL_C_CARON => Ok('Č'),
+        CAPITAL_S_CARON => Ok('Š'),
+        CAPITAL_Z_CARON => Ok('Ž'),
+        CAPITAL_ETH => Ok('Ð'),
+        CAPITAL_L_MIDDLE_DOT => Ok('Ŀ'),
+        CAPITAL_A_CIRCUMFLEX => Ok('Â'),
+        CAPITAL_A_DIAERESIS => Ok('Ä'),
+        CAPITAL_E_CIRCUMFLEX => Ok('Ê'),
+        CAPITAL_A_DIAERESIS_2 => Ok('Ë'),
+        CAPITAL_I_CIRCUMFLEX => Ok('Î'),
+        CAPITAL_I_DIAERESIS => Ok('Ï'),
+        CAPITAL_O_CIRCUMFLEX => Ok('Ô'),
+        CAPITAL_O_DIAERESIS => Ok('Ö'),
+        CAPITAL_U_CIRCUMFLEX => Ok('Û'),
+        CAPITAL_U_DIAERESIS => Ok('Ü'),
+        SMALL_R_CARON => Ok('ř'),
+        SMALL_C_CARON => Ok('č'),
+        SMALL_S_CARON => Ok('š'),
+        SMALL_Z_CARON => Ok('ž'),
+        SMALL_D_STROKE => Ok('đ'),
+        SMALL_L_MIDDLE_DOT => Ok('ŀ'),
+        CAPITAL_A_TILDE => Ok('Ã'),
+        CAPITAL_A_RING => Ok('Å'),
+        CAPITAL_AE => Ok('Æ'),
+        CAPITAL_LIGATURE_OE => Ok('Œ'),
+        SMALL_Y_CIRCUMFLEX => Ok('ŷ'),
+        CAPITAL_Y_ACUTE => Ok('Ý'),
+        CAPITAL_O_TILDE => Ok('Õ'),
+        CAPITAL_O_STROKE => Ok('Ø'),
+        CAPITAL_THORN => Ok('Þ'),
+        CAPITAL_ENG => Ok('Ŋ'),
+        CAPITAL_R_ACUTE => Ok('Ŕ'),
+        SMALL_C_ACUTE => Ok('Ć'),
+        CAPITAL_S_ACUTE => Ok('Ś'),
+        CAPITAL_Z_ACUTE => Ok('Ź'),
+        CAPITAL_T_STROKE => Ok('Ŧ'),
+        SMALL_ETH => Ok('ð'),
+        SMALL_A_TILDE => Ok('ã'),
+        SMALL_A_RING => Ok('å'),
+        SMALL_AE => Ok('æ'),
+        SMALL_LIGATURE_OE => Ok('œ'),
+        SMALL_W_CIRCUMFLEX => Ok('ŵ'),
+        SMALL_Y_ACUTE => Ok('ý'),
+        SMALL_O_TILDE => Ok('õ'),
+        SMALL_O_STROKE => Ok('ø'),
+        SMALL_THORN => Ok('þ'),
+        SMALL_ENG => Ok('ŋ'),
+        SMALL_R_ACUTE => Ok('ŕ'),
+        SMALL_C_ACUTE_2 => Ok('ć'),
+        SMALL_S_ACUTE => Ok('ś'),
+        SMALL_Z_ACUTE => Ok('ź'),
+        SMALL_T_STROKE => Ok('ŧ'),
+        PRINTABLE_MIN..=PRINTABLE_MAX => Ok(char::from(byte)),
         _ => Err(RdsCharError::InvalidRdsChar(byte)),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ascii_printable_range() {
+        // Test lower and upper bounds of printable ASCII
+        assert_eq!(to_basic_rds_char(0x20), Ok(' '));
+        assert_eq!(to_basic_rds_char(0x7E), Ok('¯')); // OVERLINE
+        assert_eq!(to_basic_rds_char(0x21), Ok('!'));
+        assert_eq!(to_basic_rds_char(0x7D), Ok('}'));
+        assert_eq!(to_basic_rds_char(0xFE), Ok('ŧ')); // SMALL_T_STROKE
+    }
+
+    #[test]
+    fn test_control_characters() {
+        assert_eq!(to_basic_rds_char(0x0A), Ok('\n'));
+        assert_eq!(to_basic_rds_char(0x0D), Ok('\r'));
+    }
+
+    #[test]
+    fn test_invalid_characters() {
+        // Below printable range
+        assert!(matches!(
+            to_basic_rds_char(0x00),
+            Err(RdsCharError::InvalidRdsChar(0x00))
+        ));
+        // Unassigned 0x7F
+        assert!(matches!(
+            to_basic_rds_char(0x7F),
+            Err(RdsCharError::InvalidRdsChar(0x7F))
+        ));
+        // Above defined range
+        assert!(matches!(
+            to_basic_rds_char(0xFF),
+            Err(RdsCharError::InvalidRdsChar(0xFF))
+        ));
+    }
+
+    #[test]
+    fn test_special_mappings() {
+        assert_eq!(to_basic_rds_char(0x24), Ok('¤')); // CURRENCY_SIGN
+        assert_eq!(to_basic_rds_char(0x5E), Ok('―')); // HORIZONTAL_BAR
+        assert_eq!(to_basic_rds_char(0x60), Ok('║')); // DOUBLE_VERTICAL_LINE
+        assert_eq!(to_basic_rds_char(0x7E), Ok('¯')); // OVERLINE
+    }
+
+    #[test]
+    fn test_extended_rds_chars() {
+        // Test a few extended mappings
+        assert_eq!(to_basic_rds_char(0xF1), Ok('å'));
+        assert_eq!(to_basic_rds_char(0xF2), Ok('æ'));
+        assert_eq!(to_basic_rds_char(0xF3), Ok('œ'));
+        assert_eq!(to_basic_rds_char(0xF4), Ok('ŵ'));
+        assert_eq!(to_basic_rds_char(0xF5), Ok('ý'));
+        assert_eq!(to_basic_rds_char(0xF6), Ok('õ'));
+        assert_eq!(to_basic_rds_char(0xF7), Ok('ø'));
+        assert_eq!(to_basic_rds_char(0xF8), Ok('þ'));
+        assert_eq!(to_basic_rds_char(0xF9), Ok('ŋ'));
+        assert_eq!(to_basic_rds_char(0xFA), Ok('ŕ'));
+        assert_eq!(to_basic_rds_char(0xFB), Ok('ć'));
+        assert_eq!(to_basic_rds_char(0xFC), Ok('ś'));
+        assert_eq!(to_basic_rds_char(0xFD), Ok('ź'));
+        assert_eq!(to_basic_rds_char(0xFE), Ok('ŧ'));
     }
 }
