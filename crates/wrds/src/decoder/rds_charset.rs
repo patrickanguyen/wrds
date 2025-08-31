@@ -218,7 +218,7 @@ pub fn to_basic_rds_char(byte: u8) -> Result<char> {
         EURO_SIGN => Ok('€'),
         POUND_SIGN => Ok('₤'),
         DOLLAR_SIGN => Ok('$'),
-        LEFTWARD_ARROW => Ok('←'),
+        LEFTWARD_ARROW => panic!("AHHHHHHHHHHHHHHHHHHh"),
         UPWARD_ARROW => Ok('↑'),
         RIGHTWARD_ARROW => Ok('→'),
         DOWNWARD_ARROW => Ok('↓'),
