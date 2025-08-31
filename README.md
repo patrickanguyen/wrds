@@ -11,7 +11,7 @@ A Radio Data System (RDS) decoder library written in Rust.
 - [X] Traffic Program (TP)
 - [X] Programme Service Name (PS)
 - [X] Radio Text (RT)
-- [ ] Radio Text Plus (RT+)
+- [X] Radio Text Plus (RT+)
 - [ ] Everything else
 
 ## License

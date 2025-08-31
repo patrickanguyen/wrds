@@ -1,11 +1,20 @@
-use thiserror::Error;
+use core::fmt;
 
 /// ModeFilter Error
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum Error {
     /// ModeFilter `min_count` exceeds `size`.
-    #[error("Min count `{min_count}` exceeds size `{size}`")]
     MinCountExceedsSize { min_count: usize, size: usize },
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::MinCountExceedsSize { min_count, size } => {
+                write!(f, "Min count `{min_count}` exceeds size `{size}`")
+            }
+        }
+    }
 }
 
 /// [`ModeFilter`] is a filter that finds the mode given `N` samples.

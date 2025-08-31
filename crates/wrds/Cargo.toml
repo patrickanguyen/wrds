@@ -4,6 +4,9 @@ version = "0.0.1"
 edition = "2021"
 license = "MIT OR Apache 2.0"
 
+[features]
+fuzzing = ["dep:arbitrary"]
+
 [dependencies]
-thiserror = { version = "2", default-features = false }
-heapless = "0.8"
+heapless = "0.9"
+arbitrary = { version = "1", features = ["derive"], optional = true }

@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo test --all-features
+
+  format:
+    name: cargo fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
+
+  fuzz:
+    name: cargo fuzz
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - fuzz_target: fuzz_decode
+
+    env:
+      # Version of `cargo-fuzz` to use
+      CARGO_FUZZ_VERSION: 0.12.0
+      # Number of seconds to run fuzz target
+      FUZZ_TIME: 10
+
+    steps:
+      # Checkout and install nightly Rust toolchain
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+
+      # Install and cache `cargo-fuzz`
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.tool_cache }}/cargo-fuzz
+          key: cargo-fuzz-bin-${{ env.CARGO_FUZZ_VERSION }}
+      - run: echo "${{ runner.tool_cache }}/cargo-fuzz/bin" >> $GITHUB_PATH
+      - run: cargo install --root "${{ runner.tool_cache }}/cargo-fuzz" --version ${{ env.CARGO_FUZZ_VERSION }} cargo-fuzz --locked
+
+      # Build then run fuzz tests
+      - run: cargo fuzz build ${{ matrix.fuzz_target }}
+      - run: cargo fuzz run ${{ matrix.fuzz_target }} -- -max_total_time=${{ env.FUZZ_TIME }}
+
+      # Upload fuzzing artifacts on failure
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fuzzing-artifacts-${{ matrix.fuzz_target }}-${{ github.sha }}
+          path: fuzz/artifacts
