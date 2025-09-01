@@ -13,6 +13,8 @@ on:
 jobs:
   test:
     name: cargo test
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -21,6 +23,8 @@ jobs:
 
   format:
     name: cargo fmt
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -32,6 +36,8 @@ jobs:
 
   fuzz:
     name: cargo fuzz
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
 
     strategy:
