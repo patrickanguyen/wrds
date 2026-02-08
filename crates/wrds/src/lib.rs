@@ -1,3 +1,9 @@
+//! A [Radio Data System (RDS)](https://en.wikipedia.org/wiki/Radio_Data_System) decoder library written in Rust.
+//!
+//! RDS is a communications protocol that allows FM broadcasts to transmit metadata to receivers like program identification, traffic announcements, and program information.
+//!
+//! This library supports both `std` and `no_std` (with the `heapless` feature enabled) environments.
+
 #![deny(unsafe_code)]
 // Enforce no_std support when `heapless` feature is enabled,
 // except for tests and fuzzing.
@@ -10,10 +16,9 @@ mod decoder;
 pub use decoder::Decoder;
 
 mod error;
-pub use error::Error;
 
 mod types;
 pub use types::{
-    Message, Metadata, ProgrammeIdentifier, ProgrammeType, RadioText, RadioTextPlusContentType,
-    RadioTextPlusTag, TrafficProgram,
+    Message, Metadata, ProgrammeIdentification, ProgrammeServiceName, ProgrammeType, RadioText,
+    RadioTextPlusContentType, RadioTextPlusTag, TrafficProgram,
 };

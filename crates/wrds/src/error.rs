@@ -4,11 +4,11 @@ use core::fmt;
 /// Radio Data System Decoding Error
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Error {
-    // #[error("Invalid input for field \"{field}\": `{value}`")]
+    /// Invalid input.
     InvalidInput { field: &'static str, value: u16 },
-    // #[error("Unimplemented RDS Group Type: {:?}", 0.0)]
+    /// Unimplemented group type.
     Unimplemented(GroupType),
-    // #[error("Unknown error")]
+    /// Unknown error.
     Unknown,
 }
 

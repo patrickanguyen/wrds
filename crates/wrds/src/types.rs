@@ -29,7 +29,7 @@ pub struct Message {
 impl Message {
     /// Create RDS Blocks struct.
     ///
-    /// Option<u16> is used in order to represent whether there are too many bit errors for the block to be used.
+    /// `Option<u16>` is used in order to represent whether there are too many bit errors for the block to be used.
     /// For example, if there are too many bit errors for block1 to be used, None should be used.
     pub fn new(
         block1: Option<u16>,
@@ -46,12 +46,22 @@ impl Message {
     }
 }
 
+/// Code that allows receivers to distinguish between audio programme content.
+///
+/// One of the important uses of the Programme Identification (PI) is to allow
+/// receivers to switch to an alternate frequency with the same PI
+/// if the current signal quality is poor.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ProgrammeIdentifier(pub u16);
+pub struct ProgrammeIdentification(pub u16);
 
+/// Flag that indicates the program may carry traffic announcement information.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TrafficProgram(pub bool);
 
+/// Identification number (0-31) that is used to specify the programme type.
+///
+/// This is roughly equivalent to the genre (e.g., News, Rock music, etc.)
+/// The actual value of the code differs per region and language.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ProgrammeType(pub u8);
 
@@ -89,6 +99,9 @@ impl From<bool> for GroupVariant {
     }
 }
 
+/// RDS message group type
+///
+/// Group types indicate what information is being transmitted in a RDS message.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct GroupType(pub u8);
 
@@ -121,6 +134,12 @@ pub(crate) type ProgrammeServiceNameString = heapless::String<PS_BYTE_SIZE>;
 #[cfg(not(feature = "heapless"))]
 pub(crate) type ProgrammeServiceNameString = String;
 
+/// Eight character text that represents the program's name.
+///
+/// This is also known as the PS.
+///
+/// In the RDS standard, this is required to be static, but stations (like in USA)
+/// will use this field to dynamically send information.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ProgrammeServiceName {
     ps: ProgrammeServiceNameString,
@@ -131,6 +150,7 @@ impl ProgrammeServiceName {
         Self { ps }
     }
 
+    /// Converts [`ProgrammeServiceName`] into a [`&str`]
     pub fn as_str(&self) -> &str {
         &self.ps
     }
@@ -157,6 +177,11 @@ pub(crate) type RadioTextPlusList = heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_
 #[cfg(not(feature = "heapless"))]
 pub(crate) type RadioTextPlusList = Vec<RadioTextPlusTag>;
 
+/// Text message transmitted by radio station.
+///
+/// RadioText (RT) is used to display information about station.
+/// It is often used to display the Slogan or Title & Artist of the
+/// currently playing song.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RadioText {
     rt: RadioTextString,
@@ -168,15 +193,21 @@ impl RadioText {
         Self { rt, rt_plus }
     }
 
+    /// Converts [`RadioText`] into a [`&str`]
     pub fn as_str(&self) -> &str {
         &self.rt
     }
 
+    /// Returns list of [`RadioTextPlusTag`]
     pub fn rt_plus(&self) -> &[RadioTextPlusTag] {
         &self.rt_plus
     }
 }
 
+/// Tag for RadioText+ (RT+)
+///
+/// The tag is used identify specific types of information
+/// within the RadioText string.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct RadioTextPlusTag {
     content_type: RadioTextPlusContentType,
@@ -197,14 +228,23 @@ impl RadioTextPlusTag {
         }
     }
 
+    /// Content type of RadioText+ tag
     pub fn content_type(&self) -> RadioTextPlusContentType {
         self.content_type
     }
 
+    /// Start index of RadioText+ tag value
+    ///
+    /// This should be used in conjunction with the length to create a
+    /// substring from the RadioText to retrieve the RadioText+ value.
     pub fn start_index(&self) -> usize {
         self.start_index
     }
 
+    /// Length of RadioText+ tag value
+    ///
+    /// This should be used in conjunction with the length to create a
+    /// substring from the RadioText to retrieve the RadioText+ value.
     pub fn length(&self) -> usize {
         self.length
     }
@@ -351,10 +391,11 @@ impl TryFrom<u8> for RadioTextPlusContentType {
 }
 
 /// This represents the current state of the RDS metadata that has come in so far.
-/// Only the completed metadata is stored within this struct (e.g., incomplete PS segments).
+///
+/// Only the completed metadata is stored within this struct (e.g., incomplete PS segments are not included).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Metadata {
-    pub pi: Option<ProgrammeIdentifier>,
+    pub pi: Option<ProgrammeIdentification>,
     pub pty: Option<ProgrammeType>,
     pub tp: Option<TrafficProgram>,
     pub ps: Option<ProgrammeServiceName>,
