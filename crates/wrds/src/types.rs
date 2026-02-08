@@ -28,6 +28,7 @@ pub struct Message {
 
 impl Message {
     /// Create RDS Blocks struct.
+    ///
     /// Option<u16> is used in order to represent whether there are too many bit errors for the block to be used.
     /// For example, if there are too many bit errors for block1 to be used, None should be used.
     pub fn new(
@@ -108,11 +109,17 @@ impl TryFrom<u8> for GroupType {
     }
 }
 
-pub const PS_LENGTH: usize = 8;
+#[cfg(feature = "heapless")]
+pub(crate) const PS_LENGTH: usize = 8;
 
-pub const PS_BYTE_SIZE: usize = PS_LENGTH * size_of::<char>();
+#[cfg(feature = "heapless")]
+pub(crate) const PS_BYTE_SIZE: usize = PS_LENGTH * size_of::<char>();
 
-pub type ProgrammeServiceNameString = heapless::String<PS_BYTE_SIZE>;
+#[cfg(feature = "heapless")]
+pub(crate) type ProgrammeServiceNameString = heapless::String<PS_BYTE_SIZE>;
+
+#[cfg(not(feature = "heapless"))]
+pub(crate) type ProgrammeServiceNameString = String;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ProgrammeServiceName {
@@ -120,7 +127,7 @@ pub struct ProgrammeServiceName {
 }
 
 impl ProgrammeServiceName {
-    pub fn new(ps: ProgrammeServiceNameString) -> Self {
+    pub(crate) fn new(ps: ProgrammeServiceNameString) -> Self {
         Self { ps }
     }
 
@@ -132,13 +139,23 @@ impl ProgrammeServiceName {
 /// Max size of Group A RadioText messages
 pub const MAX_RT_LENGTH: usize = 64;
 
-pub const MAX_RT_BYTE_SIZE: usize = MAX_RT_LENGTH * size_of::<char>();
+#[cfg(feature = "heapless")]
+pub(crate) const MAX_RT_BYTE_SIZE: usize = MAX_RT_LENGTH * size_of::<char>();
 
-pub const MAX_RT_PLUS_TAGS: usize = 2;
+#[cfg(feature = "heapless")]
+pub(crate) const MAX_RT_PLUS_TAGS: usize = 2;
 
-pub type RadioTextString = heapless::String<MAX_RT_BYTE_SIZE>;
+#[cfg(feature = "heapless")]
+pub(crate) type RadioTextString = heapless::String<MAX_RT_BYTE_SIZE>;
 
-pub type RadioTextPlusList = heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>;
+#[cfg(not(feature = "heapless"))]
+pub(crate) type RadioTextString = String;
+
+#[cfg(feature = "heapless")]
+pub(crate) type RadioTextPlusList = heapless::Vec<RadioTextPlusTag, MAX_RT_PLUS_TAGS>;
+
+#[cfg(not(feature = "heapless"))]
+pub(crate) type RadioTextPlusList = Vec<RadioTextPlusTag>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RadioText {
@@ -147,7 +164,7 @@ pub struct RadioText {
 }
 
 impl RadioText {
-    pub fn new(rt: RadioTextString, rt_plus: RadioTextPlusList) -> Self {
+    pub(crate) fn new(rt: RadioTextString, rt_plus: RadioTextPlusList) -> Self {
         Self { rt, rt_plus }
     }
 
@@ -168,7 +185,11 @@ pub struct RadioTextPlusTag {
 }
 
 impl RadioTextPlusTag {
-    pub fn new(content_type: RadioTextPlusContentType, start_index: usize, length: usize) -> Self {
+    pub(crate) fn new(
+        content_type: RadioTextPlusContentType,
+        start_index: usize,
+        length: usize,
+    ) -> Self {
         Self {
             content_type,
             start_index,

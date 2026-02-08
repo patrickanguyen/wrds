@@ -90,10 +90,9 @@ impl RtDecoder {
         if received_bitmask == required_bitmask {
             let rt_string = RadioTextString::from_iter(&self.buffer[..length]);
             let rt_plus = {
-                if self.rt_tag1.is_some() && self.rt_tag2.is_some() {
-                    RadioTextPlusList::from_array([self.rt_tag1.unwrap(), self.rt_tag2.unwrap()])
-                } else {
-                    RadioTextPlusList::new()
+                match (self.rt_tag1, self.rt_tag2) {
+                    (Some(tag1), Some(tag2)) => RadioTextPlusList::from([tag1, tag2]),
+                    _ => RadioTextPlusList::new(),
                 }
             };
             return Some(RadioText::new(rt_string, rt_plus));

@@ -5,8 +5,10 @@ edition = "2021"
 license = "MIT OR Apache 2.0"
 
 [features]
+default = []
+heapless = ["dep:heapless"]
 fuzzing = ["dep:arbitrary"]
 
 [dependencies]
-heapless = "0.9"
+heapless = { version = "0.9", optional = true }
 arbitrary = { version = "1", features = ["derive"], optional = true }

@@ -1,5 +1,10 @@
 #![deny(unsafe_code)]
-#![cfg_attr(all(not(test), not(feature = "fuzzing")), no_std)]
+// Enforce no_std support when `heapless` feature is enabled,
+// except for tests and fuzzing.
+#![cfg_attr(
+    all(feature = "heapless", not(test), not(feature = "fuzzing"),),
+    no_std
+)]
 
 mod decoder;
 pub use decoder::Decoder;
