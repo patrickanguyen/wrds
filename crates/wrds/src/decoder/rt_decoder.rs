@@ -164,6 +164,8 @@ impl RtDecoder {
 mod tests {
     use super::*;
 
+    /// Verifies that:
+    ///   - New RtDecoder will return an empty RT
     #[test]
     fn test_new_decoder_is_empty() {
         let decoder = RtDecoder::new();
@@ -174,6 +176,8 @@ mod tests {
         assert_eq!(decoder.confirmed(), None);
     }
 
+    /// Verifies that:
+    ///   - RtDecoder will properly decode RadioText sent through A messages
     #[test]
     fn test_push_segment_a_and_confirmed_full() {
         let mut decoder = RtDecoder::new();
@@ -182,7 +186,7 @@ mod tests {
         for i in 0..NUM_SEGMENTS {
             decoder.push_segment_a(i, chars, text_ab);
         }
-        let expected_text = String::from("TEST".repeat(NUM_SEGMENTS));
+        let expected_text = "TEST".repeat(NUM_SEGMENTS);
         let expected = RadioText::new(
             RadioTextString::from_iter(expected_text.chars()),
             RadioTextPlusList::new(),
@@ -190,6 +194,8 @@ mod tests {
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
+    /// Verifies that:
+    ///   - RtDecoder will properly decode RadioText sent through B messages
     #[test]
     fn test_push_segment_b_and_confirmed_full() {
         let mut decoder = RtDecoder::new();
@@ -198,7 +204,7 @@ mod tests {
         for i in 0..NUM_SEGMENTS {
             decoder.push_segment_b(i, chars, text_ab);
         }
-        let expected_text = String::from("OK".repeat(NUM_SEGMENTS));
+        let expected_text = "OK".repeat(NUM_SEGMENTS);
         let expected = RadioText::new(
             RadioTextString::from_iter(expected_text.chars()),
             RadioTextPlusList::new(),
@@ -206,6 +212,8 @@ mod tests {
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
+    /// Verifies that:
+    ///   - RadioText supports early return
     #[test]
     fn test_early_return_truncates_text() {
         let mut decoder = RtDecoder::new();
@@ -229,6 +237,8 @@ mod tests {
         assert_eq!(decoder.confirmed(), Some(expected));
     }
 
+    /// Verifies that:
+    ///   - Invalid characters are replaced with spaces
     #[test]
     fn test_invalid_characters_are_replaced_with_space() {
         let mut decoder = RtDecoder::new();
@@ -243,6 +253,8 @@ mod tests {
         assert_eq!(&decoder.buffer[..4], &expected[..4]);
     }
 
+    /// Verifies that:
+    ///   - Radiotext is clear with TextAB flag change
     #[test]
     fn test_reset_on_text_ab_change() {
         let mut decoder = RtDecoder::new();
@@ -255,6 +267,8 @@ mod tests {
         assert_eq!(&decoder.buffer[4..8], &['E', 'F', 'G', 'H']);
     }
 
+    /// Verifies that:
+    ///   - RadioText decoder will not return anything until all segments are received.
     #[test]
     fn test_confirmed_none_if_not_all_segments_received() {
         let mut decoder = RtDecoder::new();
@@ -263,6 +277,8 @@ mod tests {
         assert_eq!(decoder.confirmed(), None);
     }
 
+    /// Verifies that:
+    ///   - RadioText reset will clear everything
     #[test]
     fn test_reset() {
         let mut decoder = RtDecoder::new();
@@ -275,6 +291,8 @@ mod tests {
         assert_eq!(decoder.confirmed(), None);
     }
 
+    /// Verifies that:
+    ///   - Sending a valid segment after a early return will override it.
     #[test]
     fn test_override_early_return() {
         let mut decoder = RtDecoder::new();
@@ -295,6 +313,8 @@ mod tests {
         assert_eq!(&decoder.buffer[..4], &expected);
     }
 
+    /// Verifies that:
+    ///   - Decoder will properly decode RDS character set string
     #[test]
     fn test_non_ascii_full_string() {
         let mut decoder = RtDecoder::new();

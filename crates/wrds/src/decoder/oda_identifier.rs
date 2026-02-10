@@ -9,6 +9,8 @@ pub enum OdaError {
     /// Error for exceeding maximum number of tracked ODA applications
     #[allow(unused)]
     MaxAppsExceeded,
+    /// Invalid group type
+    InvalidGroupType(GroupType, GroupVariant),
 }
 
 impl fmt::Display for OdaError {
@@ -17,6 +19,9 @@ impl fmt::Display for OdaError {
             Self::UnknownAid(aid) => write!(f, "Unknown ODA application identifier: {aid:#04x}"),
             Self::MaxAppsExceeded => {
                 write!(f, "Exceeded maximum number of tracked ODA applications")
+            }
+            Self::InvalidGroupType(gt, gv) => {
+                write!(f, "Invalid group type and variant: {}{:?}", gt.0, gv)
             }
         }
     }
@@ -79,13 +84,16 @@ impl OdaIdentifier {
     /// Add a new ODA application with the given group type, variant, and AID
     ///
     /// # Errors
-    /// Returns an error if the AID is unknown or if the maximum number of applications is exceeded
+    /// Returns an error if invalid group type or if the maximum number of applications is exceeded
     pub fn add_new_app(
         &mut self,
         group_type: GroupType,
         group_variant: GroupVariant,
         app: OdaApplication,
     ) -> Result<(), OdaError> {
+        if !Self::is_possible_oda_group(group_type, group_variant) {
+            return Err(OdaError::InvalidGroupType(group_type, group_variant));
+        }
         let key = OdaKey {
             group_type,
             group_variant,
@@ -93,6 +101,7 @@ impl OdaIdentifier {
         self.insert_map(key, app)
     }
 
+    /// Checks whether the current group type and variant is registered
     pub fn is_registered(&self, group_type: GroupType, group_variant: GroupVariant) -> bool {
         let key = OdaKey {
             group_type,
@@ -116,6 +125,19 @@ impl OdaIdentifier {
         self.app_map.get(&key).copied()
     }
 
+    /// Checks whether group type and variant is a possible ODA group
+    pub fn is_possible_oda_group(group_type: GroupType, group_variant: GroupVariant) -> bool {
+        matches!(
+            (group_type.0, group_variant),
+            (1, GroupVariant::B)
+                | (3, GroupVariant::B)
+                | (4, GroupVariant::B)
+                | (10, GroupVariant::B)
+                | (5..=9, _)
+                | (11..=13, _)
+        )
+    }
+
     /// Helper function to insert key and app into map.
     ///
     /// This is needed because [`heapless::index_map::FnvIndexMap`] and
@@ -132,5 +154,67 @@ impl OdaIdentifier {
             self.app_map.insert(key, app);
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Verifies that:
+    ///   - `get_app()` will return `None` when no application has been added
+    #[test]
+    fn test_get_app_nothing() {
+        let oda_identifier = OdaIdentifier::new();
+        assert_eq!(oda_identifier.get_app(GroupType(5), GroupVariant::A), None)
+    }
+
+    /// Verifies that:
+    ///   - `get_app()` will return `Some` when an application has been added
+    #[test]
+    fn test_get_app_some() {
+        const GROUP_TYPE: GroupType = GroupType(5);
+        const GROUP_VARIANT: GroupVariant = GroupVariant::A;
+        const ODA_APP: OdaApplication = OdaApplication::RtPlus;
+
+        let mut oda_identifier = OdaIdentifier::new();
+        oda_identifier
+            .add_new_app(GROUP_TYPE, GROUP_VARIANT, ODA_APP)
+            .unwrap();
+
+        assert_eq!(
+            oda_identifier.get_app(GROUP_TYPE, GROUP_VARIANT),
+            Some(ODA_APP)
+        )
+    }
+
+    /// Verifies that
+    ///   `is_registered` will return true if the provided group type and
+    ///    variant has been registered
+    #[test]
+    fn test_is_registered() {
+        const GROUP_TYPE: GroupType = GroupType(5);
+        const GROUP_VARIANT: GroupVariant = GroupVariant::A;
+        const ODA_APP: OdaApplication = OdaApplication::RtPlus;
+
+        let mut oda_identifier = OdaIdentifier::new();
+        oda_identifier
+            .add_new_app(GROUP_TYPE, GROUP_VARIANT, ODA_APP)
+            .unwrap();
+
+        assert!(oda_identifier.is_registered(GROUP_TYPE, GROUP_VARIANT))
+    }
+
+    /// Verifies that:
+    ///   - `is_possible_oda_group` returns true if is a possible ODA group
+    #[test]
+    fn is_possible_oda_group_valid() {
+        const GROUP_TYPE: GroupType = GroupType(5);
+        const GROUP_VARIANT: GroupVariant = GroupVariant::A;
+
+        assert!(OdaIdentifier::is_possible_oda_group(
+            GROUP_TYPE,
+            GROUP_VARIANT
+        ))
     }
 }
