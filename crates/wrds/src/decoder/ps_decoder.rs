@@ -5,7 +5,8 @@
 use core::fmt;
 
 use crate::{
-    decoder::{bitset::Bitset, rds_charset::to_basic_rds_char},
+    bitset::Bitset,
+    decoder::rds_charset::to_basic_rds_char,
     types::{ProgrammeServiceName, ProgrammeServiceNameString},
 };
 

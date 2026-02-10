@@ -16,6 +16,8 @@
     no_std
 )]
 
+pub(crate) mod bitset;
+
 mod decoder;
 pub use decoder::Decoder;
 

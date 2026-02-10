@@ -4,13 +4,14 @@
 
 use crate::{
     decoder::{
+        infoflags_filter::InfoFlagsFilters,
         mode_filter::ModeFilter,
         oda_identifier::{OdaApplication, OdaIdentifier},
         ps_decoder::PsDecoder,
         rt_decoder::RtDecoder,
     },
     types::{
-        Block1, Block2, Block3, Block4, GroupType, GroupVariant, Message, Metadata,
+        Block1, Block2, Block3, Block4, GroupType, GroupVariant, InfoFlags, Message, Metadata,
         ProgrammeIdentification, RadioTextPlusContentType, RadioTextPlusTag,
     },
     ProgrammeType, TrafficProgram,
@@ -18,7 +19,7 @@ use crate::{
 
 use self::shared::Shared;
 
-mod bitset;
+mod infoflags_filter;
 mod mode_filter;
 mod oda_identifier;
 mod ps_decoder;
@@ -26,21 +27,15 @@ mod rds_charset;
 mod rt_decoder;
 mod shared;
 
-const PI_FILTER_COUNT: usize = 6;
-const PI_FILTER_MIN: usize = 5;
-
-const PTY_FILTER_COUNT: usize = 6;
-const PTY_FILTER_MIN: usize = 5;
-
-const TP_FILTER_COUNT: usize = 6;
-const TP_FILTER_MIN: usize = 5;
+const DEFAULT_FILTER_COUNT: usize = 6;
+const DEFAULT_FILTER_MIN: usize = 5;
 
 /// A decoder for Radio Data System.
 #[derive(Debug)]
 pub struct Decoder {
-    pi_filter: ModeFilter<ProgrammeIdentification, PI_FILTER_COUNT>,
-    pty_filter: ModeFilter<ProgrammeType, PTY_FILTER_COUNT>,
-    tp_filter: ModeFilter<TrafficProgram, TP_FILTER_COUNT>,
+    pi_filter: ModeFilter<ProgrammeIdentification, DEFAULT_FILTER_COUNT>,
+    pty_filter: ModeFilter<ProgrammeType, DEFAULT_FILTER_COUNT>,
+    info_flags_filter: InfoFlagsFilters,
     ps_decoder: PsDecoder,
     rt_decoder: RtDecoder,
     oda_identifier: OdaIdentifier,
@@ -50,9 +45,9 @@ impl Decoder {
     /// Create new RDS decoder.
     pub fn new() -> Self {
         Decoder {
-            pi_filter: ModeFilter::new(PI_FILTER_MIN).unwrap(),
-            pty_filter: ModeFilter::new(PTY_FILTER_MIN).unwrap(),
-            tp_filter: ModeFilter::new(TP_FILTER_MIN).unwrap(),
+            pi_filter: ModeFilter::new(DEFAULT_FILTER_MIN).unwrap(),
+            pty_filter: ModeFilter::new(DEFAULT_FILTER_MIN).unwrap(),
+            info_flags_filter: InfoFlagsFilters::default(),
             ps_decoder: PsDecoder::new(),
             rt_decoder: RtDecoder::new(),
             oda_identifier: oda_identifier::OdaIdentifier::new(),
@@ -78,7 +73,7 @@ impl Decoder {
     pub fn reset(&mut self) {
         self.pi_filter.reset();
         self.pty_filter.reset();
-        self.tp_filter.reset();
+        self.info_flags_filter.reset();
         self.ps_decoder.reset();
         self.rt_decoder.reset();
     }
@@ -104,21 +99,23 @@ impl Decoder {
 
         self.handle_group_variant_b_pi(&shared, maybe_block3);
         self.pty_filter.push(shared.pty);
-        self.tp_filter.push(shared.tp);
+        self.info_flags_filter.push_tp(shared.tp.0);
 
         const GROUP_TYPE0: GroupType = GroupType(0);
         const GROUP_TYPE2: GroupType = GroupType(2);
         const GROUP_TYPE3: GroupType = GroupType(3);
+        const GROUP_TYPE15: GroupType = GroupType(15);
 
         match (shared.gt, shared.gv) {
-            (GROUP_TYPE0, _) => {
-                if let Some(block4) = maybe_block4 {
-                    self.handle_ps_name(block2, block4);
-                }
+            (GROUP_TYPE0, gv) => {
+                self.handle_group0(gv, block2, maybe_block4);
             }
             (GROUP_TYPE2, _) => self.handle_radio_text(&shared, block2, maybe_block3, maybe_block4),
             (GROUP_TYPE3, GroupVariant::A) => {
                 self.handle_oda_identification(block2, maybe_block3, maybe_block4)
+            }
+            (GROUP_TYPE15, GroupVariant::B) => {
+                self.handle_group15b(block2, maybe_block4);
             }
             (gt, gv) if self.oda_identifier.is_registered(gt, gv) => {
                 let app = self
@@ -140,13 +137,85 @@ impl Decoder {
         }
     }
 
+    /// Handles Group 0 messages.
+    ///
+    /// Assumes that blocks comes from correct RDS group.
+    fn handle_group0(
+        &mut self,
+        _variant: GroupVariant,
+        block2: &Block2,
+        maybe_block4: &Option<Block4>,
+    ) {
+        self.handle_ta_ms(block2.0);
+
+        let (decoder_control_bits, decoder_control_value) = Self::get_di(block2.0);
+        self.handle_di(decoder_control_bits, decoder_control_value);
+
+        if let Some(block4) = maybe_block4 {
+            self.handle_ps_name(decoder_control_bits, block4);
+        }
+    }
+
+    /// Handles Group 15B messages
+    ///
+    /// Assumes that the block comes from the correct RDS group.
+    fn handle_group15b(&mut self, block2: &Block2, maybe_block4: &Option<Block4>) {
+        self.handle_ta_ms(block2.0);
+        let (decoder_control_bits, decoder_control_value) = Self::get_di(block2.0);
+        self.handle_di(decoder_control_bits, decoder_control_value);
+
+        if let Some(block4) = maybe_block4 {
+            self.handle_ta_ms(block4.0);
+            let (decoder_control_bits, decoder_control_value) = Self::get_di(block4.0);
+            self.handle_di(decoder_control_bits, decoder_control_value);
+        }
+    }
+
+    /// Handle TA and MS flags from block
+    ///
+    /// Assumes that the block is from the correct RDS group.
+    fn handle_ta_ms(&mut self, block: u16) {
+        const TA_BITMASK: u16 = 0b10000;
+        let ta = block & TA_BITMASK;
+        self.info_flags_filter.push_ta(ta > 0);
+
+        const MS_BITMASK: u16 = 0b1000;
+        let ms = block & MS_BITMASK;
+        self.info_flags_filter.push_ms(ms > 0);
+    }
+
+    /// Get DI control bits and value from block
+    ///
+    /// Assumes that the block is from the correct RDS group.
+    fn get_di(block: u16) -> (u16, bool) {
+        const DI_CONTROL_BITMASK: u16 = 0b011;
+        let decoder_control_bits = block & DI_CONTROL_BITMASK;
+        const DI_VALUE_BITMASK: u16 = 0b100;
+        let decode_control_value = (block & DI_VALUE_BITMASK) > 0;
+        (decoder_control_bits, decode_control_value)
+    }
+
+    /// Handles decoder control bits
+    ///
+    /// Currently only handles stereo
+    fn handle_di(&mut self, control_bits: u16, value: bool) {
+        const STEREO: u16 = 0b11;
+        if control_bits == STEREO {
+            self.info_flags_filter.push_stereo(value);
+        }
+    }
+
     /// Handle PS message
-    fn handle_ps_name(&mut self, block2: &Block2, block4: &Block4) {
-        const PS_IDX_BITMASK: u16 = 0b11;
-        let idx = block2.0 & PS_IDX_BITMASK;
+    ///
+    /// Assumes that `decoder_control_bits` is between 0 to 3, inclusive.
+    fn handle_ps_name(&mut self, decoder_control_bits: u16, block4: &Block4) {
+        debug_assert!(
+            decoder_control_bits <= 3,
+            "Decoder control bits should been bitmasked"
+        );
         let chars = block4.0.to_be_bytes();
         self.ps_decoder
-            .push_segment(idx.into(), chars)
+            .push_segment(decoder_control_bits.into(), chars)
             .expect("PS segment index should always be valid after bit-masking");
     }
 
@@ -284,12 +353,16 @@ impl Decoder {
 
     /// Returns the current metadata decoded
     pub fn metadata(&self) -> Metadata {
+        let info_flags = self.info_flags_filter.info_flags();
         Metadata {
             pi: self.pi_filter.mode(),
             pty: self.pty_filter.mode(),
-            tp: self.tp_filter.mode(),
+            tp: Some(TrafficProgram(
+                info_flags.is_set(InfoFlags::TRAFFIC_PROGRAM),
+            )),
             ps: self.ps_decoder.confirmed(),
             rt: self.rt_decoder.confirmed(),
+            info_flags,
         }
     }
 }
@@ -328,13 +401,7 @@ mod tests {
         }
 
         let metadata = decoder.decode(&message);
-        assert_eq!(
-            metadata,
-            Metadata {
-                pi: Some(ProgrammeIdentification(EXPECTED_PI)),
-                ..Default::default()
-            }
-        )
+        assert_eq!(metadata.pi(), Some(ProgrammeIdentification(EXPECTED_PI)))
     }
 
     /// Verifies that:
@@ -351,15 +418,7 @@ mod tests {
             let _ = decoder.decode(&message);
         }
         let metadata = decoder.decode(&message);
-        assert_eq!(
-            metadata,
-            Metadata {
-                pty: Some(ProgrammeType(0x17)),
-                tp: Some(TrafficProgram(true)),
-                pi: Some(ProgrammeIdentification(EXPECTED_PI)),
-                ..Default::default()
-            }
-        )
+        assert_eq!(metadata.pi(), Some(ProgrammeIdentification(EXPECTED_PI)));
     }
 
     /// Verifies that:
