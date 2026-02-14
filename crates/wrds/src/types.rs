@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MPL-2.0
 
-use crate::error::Error;
+use crate::{bitset::Bitset, error::Error};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "fuzzing", derive(arbitrary::Arbitrary))]
@@ -61,6 +61,54 @@ pub struct ProgrammeIdentification(pub u16);
 /// Flag that indicates the program may carry traffic announcement information.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct TrafficProgram(pub bool);
+
+const INFO_FLAGS_SIZE: usize = 16;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct InfoFlags {
+    bitset: Bitset<INFO_FLAGS_SIZE>,
+}
+
+impl InfoFlags {
+    /// If flag is set, indicates the program may carry traffic announcement information.
+    pub const TRAFFIC_PROGRAM: usize = 0;
+    /// If flag is set, program is broadcasting traffic information
+    pub const TRAFFIC_ANNOUNCEMENT: usize = 1;
+    /// If flag is set, the audio is stereo, otherwise mono
+    pub const STEREO: usize = 2;
+    /// If flag is set, the audio being broadcast is Music, otherwise Speech
+    pub const MUSIC: usize = 3;
+
+    /// Set bit at `position` to `value`
+    pub(crate) fn set(&mut self, position: usize, value: bool) {
+        debug_assert!(position < INFO_FLAGS_SIZE);
+        self.bitset
+            .set(position, value)
+            .expect("The position should fit within `INFO_FLAGS_SIZE`");
+    }
+
+    /// Returns underlying value of [`InfoFlags`]
+    pub fn value(&self) -> u16 {
+        self.bitset.value()
+    }
+
+    /// Checks if `flag` is set
+    pub fn is_set(&self, flag: usize) -> bool {
+        self.bitset.is_set(flag)
+    }
+}
+
+impl Default for InfoFlags {
+    /// Set default flags
+    ///
+    /// `FLAG_MUSIC` is default to true because when broadcaster is not using the
+    /// Music/Speech code, it is set to Music.
+    fn default() -> Self {
+        let mut bitset = Bitset::default();
+        bitset.set_bit(InfoFlags::MUSIC).unwrap();
+        Self { bitset }
+    }
+}
 
 /// Identification number (0-31) that is used to specify the programme type.
 ///
@@ -397,13 +445,27 @@ impl TryFrom<u8> for RadioTextPlusContentType {
 /// This represents the current state of the RDS metadata that has come in so far.
 ///
 /// Only the completed metadata is stored within this struct (e.g., incomplete PS segments are not included).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Metadata {
     pub(crate) pi: Option<ProgrammeIdentification>,
     pub(crate) pty: Option<ProgrammeType>,
     pub(crate) tp: Option<TrafficProgram>,
     pub(crate) ps: Option<ProgrammeServiceName>,
     pub(crate) rt: Option<RadioText>,
+    pub(crate) info_flags: InfoFlags,
+}
+
+impl Default for Metadata {
+    fn default() -> Self {
+        Self {
+            tp: Some(TrafficProgram(false)),
+            pi: Default::default(),
+            pty: Default::default(),
+            ps: Default::default(),
+            rt: Default::default(),
+            info_flags: Default::default(),
+        }
+    }
 }
 
 impl Metadata {
@@ -418,6 +480,7 @@ impl Metadata {
     }
 
     /// Returns [`TrafficProgram`] if found
+    #[deprecated = "Replaced by `Metadata::info_flags()`"]
     pub fn tp(&self) -> Option<TrafficProgram> {
         self.tp
     }
@@ -430,6 +493,11 @@ impl Metadata {
     /// Returns [`RadioText`] if found
     pub fn rt(&self) -> Option<&RadioText> {
         self.rt.as_ref()
+    }
+
+    /// Returns [`InfoFlags`]
+    pub fn info_flags(&self) -> InfoFlags {
+        self.info_flags
     }
 }
 
