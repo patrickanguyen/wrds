@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Patrick Nguyen
+//
+// SPDX-License-Identifier: MPL-2.0
+
 //! A [Radio Data System (RDS)](https://en.wikipedia.org/wiki/Radio_Data_System) decoder library written in Rust.
 //!
 //! RDS is a communications protocol that allows FM broadcasts to transmit metadata to receivers like program identification, traffic announcements, and program information.

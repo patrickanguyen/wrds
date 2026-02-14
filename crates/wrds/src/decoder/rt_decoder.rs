@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Patrick Nguyen
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use crate::decoder::{bitset::Bitset, rds_charset::to_basic_rds_char};
 use crate::types::{
     RadioText, RadioTextPlusList, RadioTextPlusTag, RadioTextString, MAX_RT_LENGTH,

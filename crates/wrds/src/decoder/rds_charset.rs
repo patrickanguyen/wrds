@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Patrick Nguyen
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use core::{error::Error, fmt};
 
 #[derive(Debug, PartialEq, Eq)]

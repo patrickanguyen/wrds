@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Patrick Nguyen
+//
+// SPDX-License-Identifier: MPL-2.0
+
 use crate::types::{Block2, GroupType, GroupVariant, ProgrammeType, TrafficProgram};
 
 /// Struct containing fields inside Block2 that are always present in all RDS messages regardless of Group Type.
