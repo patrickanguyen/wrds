@@ -399,11 +399,38 @@ impl TryFrom<u8> for RadioTextPlusContentType {
 /// Only the completed metadata is stored within this struct (e.g., incomplete PS segments are not included).
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Metadata {
-    pub pi: Option<ProgrammeIdentification>,
-    pub pty: Option<ProgrammeType>,
-    pub tp: Option<TrafficProgram>,
-    pub ps: Option<ProgrammeServiceName>,
-    pub rt: Option<RadioText>,
+    pub(crate) pi: Option<ProgrammeIdentification>,
+    pub(crate) pty: Option<ProgrammeType>,
+    pub(crate) tp: Option<TrafficProgram>,
+    pub(crate) ps: Option<ProgrammeServiceName>,
+    pub(crate) rt: Option<RadioText>,
+}
+
+impl Metadata {
+    /// Returns [`ProgrammeIdentification`] if found
+    pub fn pi(&self) -> Option<ProgrammeIdentification> {
+        self.pi
+    }
+
+    /// Returns [`ProgrammeType`] if found
+    pub fn pty(&self) -> Option<ProgrammeType> {
+        self.pty
+    }
+
+    /// Returns [`TrafficProgram`] if found
+    pub fn tp(&self) -> Option<TrafficProgram> {
+        self.tp
+    }
+
+    /// Returns [`ProgrammeServiceName`] if found
+    pub fn ps(&self) -> Option<&ProgrammeServiceName> {
+        self.ps.as_ref()
+    }
+
+    /// Returns [`RadioText`] if found
+    pub fn rt(&self) -> Option<&RadioText> {
+        self.rt.as_ref()
+    }
 }
 
 #[cfg(test)]
